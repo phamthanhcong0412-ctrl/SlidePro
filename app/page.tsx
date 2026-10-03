@@ -277,20 +277,23 @@ export default function HomePage() {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col overflow-y-auto bg-[#0a0f1d] pb-16 lg:pb-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Stepper Navigation: docked directly below Header, never overlaps scrollable content */}
           {activeView === 'editor' && (
-            <>
-              {/* Stepper Navigation (indicator only, not clickable) */}
-              <Stepper currentStep={currentStep} />
+            <Stepper currentStep={currentStep} />
+          )}
 
-              {/* Step 1: Upload */}
-              {currentStep === 1 && (
-                <Step1Upload
-                  onFileLoaded={handleFileLoaded}
-                  onProceed={handleProceedFromStep1}
-                  currentProject={currentProject}
-                />
-              )}
+          <main className="flex-1 flex flex-col overflow-y-auto bg-[#0a0f1d] pb-16 lg:pb-0">
+            {activeView === 'editor' && (
+              <>
+                {/* Step 1: Upload */}
+                {currentStep === 1 && (
+                  <Step1Upload
+                    onFileLoaded={handleFileLoaded}
+                    onProceed={handleProceedFromStep1}
+                    currentProject={currentProject}
+                  />
+                )}
 
               {/* Step 2: Outline & Analysis (Duyệt dàn ý) */}
               {currentStep === 2 && (
@@ -379,7 +382,8 @@ export default function HomePage() {
               </div>
             </div>
           )}
-        </main>
+          </main>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation Bar (< lg) */}
