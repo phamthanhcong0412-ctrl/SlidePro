@@ -62,25 +62,10 @@ export default function AuthModal({
     return () => window.removeEventListener('message', handleAuthMessage);
   }, [onLoginSuccess]);
 
-  // Handle Google Login Click (Opens authentic Google Login Page / Popup)
+  // Handle Google Login Click (Opens authentic Google Login Page and redirects back)
   const handleGoogleLogin = () => {
     setIsLoading(true);
-
-    const width = 500;
-    const height = 650;
-    const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 100;
-    const top = typeof window !== 'undefined' ? window.screenY + (window.outerHeight - height) / 2 : 100;
-
-    const popup = window.open(
-      '/auth/google',
-      'GoogleSignIn',
-      `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,scrollbars=yes`
-    );
-
-    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-      // Fallback: If popup is blocked by browser, redirect directly
-      window.location.href = '/auth/google?redirect=/';
-    }
+    window.location.href = '/auth/google?redirect=/';
   };
 
   // Email Register Submission
