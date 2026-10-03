@@ -16,7 +16,9 @@ import {
   Download,
   RotateCw,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2,
+  Wand2
 } from 'lucide-react';
 import { LectureProject, Slide, QuizQuestion } from '@/types/presentation';
 import { VOICE_OPTIONS } from '@/lib/sampleData';
@@ -44,6 +46,19 @@ export default function Step3ScriptQuiz({
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
   const [isGeneratingAiQuiz, setIsGeneratingAiQuiz] = useState(false);
   const [isExportingPptx, setIsExportingPptx] = useState(false);
+
+  // Real Google AI Rewrite States
+  const [rewritingSlideId, setRewritingSlideId] = useState<string | null>(null);
+  const [isRewritingAll, setIsRewritingAll] = useState(false);
+  const [isModalRewriting, setIsModalRewriting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showNotification = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
 
   // Stop speech when component unmounts
   useEffect(() => {
@@ -91,7 +106,7 @@ export default function Step3ScriptQuiz({
   };
 
   const handleSaveScript = (slideId: string) => {
-    const wordCount = editedScriptText.trim().split(/\s+/).length;
+    const wordCount = editedScriptText.trim().split(/\s+/).filter(Boolean).length;
     const duration = Math.round((wordCount / 140) * 60);
 
     const updatedSlides = project.slides.map((s) =>
@@ -112,30 +127,133 @@ export default function Step3ScriptQuiz({
     setEditingSlideId(null);
   };
 
-  const handleAiPolishScript = (slideId: string) => {
+  // Real Google Gemini AI Rewrite for a single slide
+  const handleAiPolishScript = async (slideId: string, style: string = 'pedagogical') => {
     const slide = project.slides.find((s) => s.id === slideId);
+    if (!slide || rewritingSlideId) return;
+
+    setRewritingSlideId(slideId);
+    try {
+      const res = await fetch('/api/gemini/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slideTitle: slide.title,
+          bulletPoints: slide.points,
+          currentScript: slide.script,
+          style,
+          audience: project.audience,
+          field: project.field,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.script) {
+        const updatedSlides = project.slides.map((s) =>
+          s.id === slideId
+            ? {
+                ...s,
+                script: data.script,
+                wordCount: data.wordCount || data.script.trim().split(/\s+/).filter(Boolean).length,
+                duration: data.duration || Math.round((data.wordCount / 140) * 60),
+              }
+            : s
+        );
+
+        onUpdateProject({
+          ...project,
+          slides: updatedSlides,
+        });
+        showNotification('✨ Google Gemini AI đã viết lại lời giảng truyền cảm!');
+      }
+    } catch (err) {
+      console.error('Gemini rewrite error:', err);
+      showNotification('Không thể kết nối đến AI, vui lòng thử lại.');
+    } finally {
+      setRewritingSlideId(null);
+    }
+  };
+
+  // Batch rewrite all slides with Google Gemini
+  const handleRewriteAllWithAi = async () => {
+    if (isRewritingAll || project.slides.length === 0) return;
+    setIsRewritingAll(true);
+    showNotification('✨ Google AI đang viết lại kịch bản cho toàn bộ slide...');
+
+    try {
+      const updatedSlides = [...project.slides];
+      for (let i = 0; i < updatedSlides.length; i++) {
+        const slide = updatedSlides[i];
+        try {
+          const res = await fetch('/api/gemini/rewrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slideTitle: slide.title,
+              bulletPoints: slide.points,
+              currentScript: slide.script,
+              style: 'pedagogical',
+              audience: project.audience,
+              field: project.field,
+            }),
+          });
+          const data = await res.json();
+          if (data.script) {
+            updatedSlides[i] = {
+              ...slide,
+              script: data.script,
+              wordCount: data.wordCount,
+              duration: data.duration,
+            };
+          }
+        } catch (e) {
+          console.error(`Error on slide ${i}:`, e);
+        }
+      }
+
+      onUpdateProject({
+        ...project,
+        slides: updatedSlides,
+      });
+      showNotification('🎉 Đã hoàn tất dùng Google AI viết lại toàn bộ slide!');
+    } catch (err) {
+      console.error('Batch rewrite error:', err);
+    } finally {
+      setIsRewritingAll(false);
+    }
+  };
+
+  // Google AI rewrite inside the edit modal
+  const handleModalAiRewrite = async (style: string = 'pedagogical') => {
+    if (!editingSlideId || isModalRewriting) return;
+    const slide = project.slides.find((s) => s.id === editingSlideId);
     if (!slide) return;
 
-    // Enhance and polish script
-    const polished = `${slide.script} Để minh chứng rõ hơn cho luận điểm này, các nghiên cứu thực nghiệm đã chỉ ra rằng khi áp dụng đúng phương pháp chuẩn, hiệu quả tiếp thu và ghi nhớ kiến thức tăng hơn 40%.`;
-    const wordCount = polished.trim().split(/\s+/).length;
-    const duration = Math.round((wordCount / 140) * 60);
+    setIsModalRewriting(true);
+    try {
+      const res = await fetch('/api/gemini/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slideTitle: slide.title,
+          bulletPoints: slide.points,
+          currentScript: editedScriptText || slide.script,
+          style,
+          audience: project.audience,
+          field: project.field,
+        }),
+      });
 
-    const updatedSlides = project.slides.map((s) =>
-      s.id === slideId
-        ? {
-            ...s,
-            script: polished,
-            wordCount,
-            duration,
-          }
-        : s
-    );
-
-    onUpdateProject({
-      ...project,
-      slides: updatedSlides,
-    });
+      const data = await res.json();
+      if (data.script) {
+        setEditedScriptText(data.script);
+        showNotification('✨ Google AI đã viết lại lời giảng mới trong ô soạn thảo!');
+      }
+    } catch (err) {
+      console.error('Modal AI rewrite error:', err);
+    } finally {
+      setIsModalRewriting(false);
+    }
   };
 
   // Generate AI Quizzes
@@ -332,8 +450,44 @@ export default function Step3ScriptQuiz({
         {/* TAB 1: LỜI GIẢNG CARDS */}
         {activeTab === 'script' && (
           <div className="space-y-4">
+            {/* AI Banner Toolbar */}
+            <div className="bg-[#0f172a] border border-cyan-900/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="flex items-center gap-2 text-slate-300">
+                <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-semibold text-white">Google Gemini AI</span>
+                  <span className="text-slate-400 ml-1.5 hidden sm:inline">
+                    — Tự động viết lại kịch bản thuyết trình tự nhiên, phong cách giảng dạy truyền cảm.
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleRewriteAllWithAi}
+                disabled={isRewritingAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-semibold transition-all shadow-md shadow-cyan-500/15 disabled:opacity-50 cursor-pointer"
+                title="Google AI sẽ lần lượt viết lại kịch bản cho tất cả slide"
+              >
+                {isRewritingAll ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang viết lại tất cả...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>AI viết lại toàn bộ slide</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             {project.slides.map((slide, sIdx) => {
               const isPlaying = isPlayingAudio === slide.id;
+              const isRewritingThis = rewritingSlideId === slide.id;
 
               return (
                 <div
@@ -374,7 +528,7 @@ export default function Step3ScriptQuiz({
                       onClick={() => handleSpeech(slide.script, slide.id)}
                       className={`w-full py-1.5 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
                         isPlaying
-                          ? 'bg-amber-600 text-white animate-pulse'
+                           ? 'bg-amber-600 text-white animate-pulse'
                           : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700'
                       }`}
                     >
@@ -401,17 +555,29 @@ export default function Step3ScriptQuiz({
 
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
                           onClick={() => handleAiPolishScript(slide.id)}
-                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
-                          title="Dùng AI làm lời giảng tự nhiên và cuốn hút hơn"
+                          disabled={isRewritingThis || isRewritingAll}
+                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 disabled:opacity-50 transition-colors cursor-pointer"
+                          title="Dùng Google Gemini viết lại lời giảng sư phạm tự nhiên"
                         >
-                          <Sparkles className="w-3 h-3" />
-                          <span>AI viết lại</span>
+                          {isRewritingThis ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                              <span className="text-cyan-400 font-semibold">Đang viết lại...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 text-cyan-400" />
+                              <span>AI viết lại</span>
+                            </>
+                          )}
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => handleOpenEditModal(slide)}
-                          className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 transition-colors"
+                          className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Sửa lời giảng</span>
@@ -590,30 +756,77 @@ export default function Step3ScriptQuiz({
 
       {/* Script Edit Modal */}
       {editingSlideId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#131b2e] border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
-            <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-[#131b2e] border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleModalAiRewrite('pedagogical')}
+                  disabled={isModalRewriting}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-700/60 text-cyan-300 hover:bg-cyan-900/60 text-[11px] font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Google Gemini viết lại theo chuẩn phong cách sư phạm"
+                >
+                  {isModalRewriting ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                  ) : (
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                  )}
+                  <span>Google AI viết lại</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleModalAiRewrite('concise')}
+                  disabled={isModalRewriting}
+                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Viết ngắn gọn, súc tích"
+                >
+                  Ngắn gọn
+                </button>
+              </div>
+            </div>
+
             <textarea
               rows={6}
               value={editedScriptText}
               onChange={(e) => setEditedScriptText(e.target.value)}
+              placeholder="Nhập lời giảng hoặc bấm 'Google AI viết lại' để tự động tạo..."
               className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
             />
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => setEditingSlideId(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => handleSaveScript(editingSlideId)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white"
-              >
-                Lưu lời giảng
-              </button>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span>
+                {editedScriptText.trim().split(/\s+/).filter(Boolean).length} từ (~{Math.round(editedScriptText.trim().split(/\s+/).filter(Boolean).length / 140 * 60)} giây)
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingSlideId(null)}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveScript(editingSlideId)}
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-semibold text-white shadow-sm transition-colors cursor-pointer"
+                >
+                  Lưu lời giảng
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-[#0d162a] border border-cyan-500/40 text-cyan-200 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span>{toastMessage}</span>
         </div>
       )}
 
