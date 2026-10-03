@@ -1,6 +1,6 @@
 {
-  "name": "Remix SlidePro - Tạo Slide Bài Giảng từ PDF",
-  "description": "Ứng dụng thông minh chuyển đổi tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx) chuẩn xác.",
+  "name": "SlideEdu - Tạo Slide & Soạn Bài Giảng Giáo Dục từ PDF",
+  "description": "Ứng dụng thông minh phục vụ giáo dục, chuyển đổi giáo án tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất PowerPoint (.pptx).",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

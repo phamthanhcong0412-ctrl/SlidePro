@@ -62,6 +62,49 @@ export default function AuthModal({
     return () => window.removeEventListener('message', handleAuthMessage);
   }, [onLoginSuccess]);
 
+  // Quick 1-click login for the account owner
+  const handleQuickUserLogin = () => {
+    setIsLoading(true);
+    setShowBonusAlert(true);
+    const ownerUser: UserProfile = {
+      id: `usr-owner-${Date.now()}`,
+      name: 'Phạm Thành Công',
+      email: 'buihoai0412@gmail.com',
+      avatar: 'TC',
+      picture: 'https://api.dicebear.com/7.x/initials/svg?seed=PhamThanhCong&backgroundColor=0284c7,0d9488',
+      balance: 50000,
+      isGoogle: true,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    try {
+      confetti({
+        particleCount: 70,
+        spread: 80,
+        origin: { y: 0.6 },
+      });
+    } catch {
+      // ignore
+    }
+    setTimeout(() => {
+      onLoginSuccess(ownerUser, false);
+      setIsLoading(false);
+    }, 500);
+  };
+
+  // Guest access without login requirement
+  const handleGuestAccess = () => {
+    const guestUser: UserProfile = {
+      id: `usr-guest-${Date.now()}`,
+      name: 'Khách trải nghiệm',
+      email: 'khach@slideedu.vn',
+      avatar: 'KH',
+      balance: 30000,
+      isGoogle: false,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    onLoginSuccess(guestUser, false);
+  };
+
   // Handle Google Login Click (Opens authentic Google Login Page and redirects back)
   const handleGoogleLogin = () => {
     setIsLoading(true);
@@ -137,11 +180,18 @@ export default function AuthModal({
         {/* Decorative Top Accent Glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-32 bg-cyan-500/20 blur-3xl rounded-full pointer-events-none" />
 
-        {/* Close Button if not blocking gate */}
-        {!isGate && onClose && (
+        {/* Close Button */}
+        {onClose && (
           <button
-            onClick={onClose}
-            className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            onClick={() => {
+              if (isGate) {
+                handleGuestAccess();
+              } else {
+                onClose();
+              }
+            }}
+            className="absolute top-5 right-5 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer z-10"
+            title="Đóng / Trải nghiệm ngay"
           >
             <X className="w-4 h-4" />
           </button>
@@ -190,12 +240,31 @@ export default function AuthModal({
           </div>
         )}
 
+        {/* Quick 1-Click Login for Account Owner */}
+        <button
+          type="button"
+          onClick={handleQuickUserLogin}
+          disabled={isLoading}
+          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs sm:text-sm font-semibold flex items-center justify-between gap-3 transition-all shadow-lg shadow-cyan-950/50 active:scale-[0.99] cursor-pointer mb-2.5"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-white/20 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              TC
+            </div>
+            <div className="text-left min-w-0">
+              <div className="font-bold truncate text-xs sm:text-sm">Đăng nhập nhanh: Phạm Thành Công</div>
+              <div className="text-[11px] text-cyan-200 truncate">buihoai0412@gmail.com (50,000 Xu)</div>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 shrink-0 text-cyan-200" />
+        </button>
+
         {/* Google Login Button - Opens Standard Google OAuth Login Page */}
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading}
-          className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg active:scale-[0.99] border border-slate-200/90 group cursor-pointer mb-4"
+          className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg active:scale-[0.99] border border-slate-200/90 group cursor-pointer mb-2"
         >
           {/* Official Google Icon SVG */}
           <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24">
@@ -216,7 +285,16 @@ export default function AuthModal({
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span className="text-slate-800 font-semibold">Tiếp tục với Google</span>
+          <span className="text-slate-800 font-semibold">Đăng nhập tài khoản Google khác</span>
+        </button>
+
+        {/* Guest Access Button */}
+        <button
+          type="button"
+          onClick={handleGuestAccess}
+          className="w-full py-2 px-3 text-center text-xs text-slate-400 hover:text-cyan-300 transition cursor-pointer mb-2"
+        >
+          Trải nghiệm ngay với tư cách Khách (Không cần đăng nhập) →
         </button>
 
         {/* Divider */}

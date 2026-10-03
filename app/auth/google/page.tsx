@@ -146,7 +146,35 @@ function GoogleLoginContent() {
             Chọn tài khoản Google của bạn:
           </div>
 
-          {/* Account 1: User's Account */}
+          {/* Account 1: User's Account (buihoai0412@gmail.com) */}
+          <button
+            type="button"
+            onClick={() =>
+              handleQuickLogin('buihoai0412@gmail.com', 'Phạm Thành Công (Google Edu)')
+            }
+            disabled={isLoading}
+            className="w-full p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50 hover:border-blue-500 hover:bg-blue-50/80 transition-all flex items-center justify-between text-left group cursor-pointer shadow-xs"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
+                TC
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 truncate flex items-center gap-1.5">
+                  <span>Phạm Thành Công</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                    Tài khoản của bạn
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 truncate">
+                  buihoai0412@gmail.com
+                </div>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+          </button>
+
+          {/* Account 2: Secondary Account */}
           <button
             type="button"
             onClick={() =>
@@ -160,11 +188,8 @@ function GoogleLoginContent() {
                 TC
               </div>
               <div className="min-w-0">
-                <div className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 truncate flex items-center gap-1.5">
-                  <span>Thành Công</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 font-medium">
-                    Tài khoản của bạn
-                  </span>
+                <div className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 truncate">
+                  Thành Công
                 </div>
                 <div className="text-xs text-slate-500 truncate">
                   boyeucongaibo.delpiero@gmail.com

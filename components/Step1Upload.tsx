@@ -221,7 +221,7 @@ export default function Step1Upload({
   return (
     <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 max-w-5xl mx-auto w-full relative">
       {/* Top Title Section matching screenshot 1 */}
-      <div className="text-center pt-2 sm:pt-4 pb-4 sm:pb-6 space-y-1.5 sm:space-y-2">
+      <div className="text-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-6 space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
           Tải lên bài giảng PDF
         </h1>

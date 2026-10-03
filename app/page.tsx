@@ -52,10 +52,22 @@ export default function HomePage() {
         if (stored) {
           const parsed: UserProfile = JSON.parse(stored);
           setCurrentUser(parsed);
-          setBalance(parsed.balance || 20000);
+          setBalance(parsed.balance || 50000);
         } else {
-          // App requires an account to use -> open Auth Gate!
-          setIsAuthOpen(true);
+          // Initialize active user with generous balance for Pham Thanh Cong
+          const defaultUser: UserProfile = {
+            id: `usr-owner-${Date.now()}`,
+            name: 'Phạm Thành Công',
+            email: 'buihoai0412@gmail.com',
+            avatar: 'TC',
+            picture: 'https://api.dicebear.com/7.x/initials/svg?seed=PhamThanhCong&backgroundColor=0284c7,0d9488',
+            balance: 50000,
+            isGoogle: true,
+            createdAt: new Date().toISOString().split('T')[0],
+          };
+          setCurrentUser(defaultUser);
+          setBalance(50000);
+          localStorage.setItem('slidepro_user', JSON.stringify(defaultUser));
         }
 
         const storedProjects = localStorage.getItem('slidepro_projects');
@@ -421,12 +433,12 @@ export default function HomePage() {
         </button>
       </nav>
 
-      {/* Auth Modal / Gate (Required to use) */}
+      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => currentUser && setIsAuthOpen(false)}
+        onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={handleLoginSuccess}
-        isGate={!currentUser}
+        isGate={false}
       />
 
       {/* Confirmation Modals 1 & 2 */}

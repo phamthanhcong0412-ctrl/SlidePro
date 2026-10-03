@@ -103,7 +103,7 @@ export default function Step2Outline({
   const currentRotation = rotationDegrees[previewSlideIndex] || 0;
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 max-w-7xl mx-auto w-full">
+    <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 pt-6 sm:pt-8 max-w-7xl mx-auto w-full">
       <div className="space-y-4 sm:space-y-5">
         {/* Title & Overview Banner matching Screenshot 2 */}
         <div>

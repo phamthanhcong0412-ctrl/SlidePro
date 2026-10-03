@@ -19,7 +19,7 @@ export default function Stepper({ currentStep }: StepperProps) {
   const activeStep = steps.find((s) => s.number === currentStep) || steps[0];
 
   return (
-    <div className="w-full py-2.5 sm:py-3.5 px-3 sm:px-6 border-b border-slate-800/80 bg-[#0d1424]/95 backdrop-blur-sm sticky top-16 z-20 select-none">
+    <div className="w-full py-2.5 sm:py-3 px-3 sm:px-6 border-b border-slate-800 bg-[#0d1424] sticky top-0 z-20 select-none shrink-0 shadow-sm">
       {/* Mobile Stepper Header (< sm) */}
       <div className="sm:hidden flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs">
