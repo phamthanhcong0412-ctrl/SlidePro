@@ -50,7 +50,7 @@ export default function AuthModal({
         name: 'Pixels (Google User)',
         email: 'mrpixelvns@gmail.com',
         avatar: 'PI',
-        balance: 20000, // Tặng ngay 20.000 đ cho tài khoản mới!
+        balance: 20000,
         isGoogle: true,
         createdAt: new Date().toISOString().split('T')[0],
       };
@@ -87,7 +87,7 @@ export default function AuthModal({
         name: displayName,
         email: email,
         avatar: displayName.substring(0, 2).toUpperCase(),
-        balance: 20000, // Tặng ngay 20.000 đ
+        balance: 20000,
         isGoogle: false,
         createdAt: new Date().toISOString().split('T')[0],
       };
@@ -123,7 +123,7 @@ export default function AuthModal({
         name: displayName,
         email: email,
         avatar: displayName.substring(0, 2).toUpperCase(),
-        balance: 20000, // Có 20.000 đ
+        balance: 20000,
         isGoogle: false,
         createdAt: new Date().toISOString().split('T')[0],
       };
@@ -243,7 +243,7 @@ export default function AuthModal({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Đăng ký mới (+20k)
+            Đăng ký mới
           </button>
           <button
             type="button"
@@ -317,7 +317,7 @@ export default function AuthModal({
             ) : tab === 'register' ? (
               <>
                 <Zap className="w-4 h-4 text-amber-300" />
-                <span>Đăng ký & Nhận 20.000 đ</span>
+                <span>Đăng ký tài khoản miễn phí</span>
               </>
             ) : (
               <>
@@ -331,7 +331,7 @@ export default function AuthModal({
         <div className="mt-4 pt-3 border-t border-slate-800 text-center">
           <span className="text-[11px] text-slate-500 flex items-center justify-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Tài khoản dùng thử demo • Tự động kích hoạt ngay lập tức
+            Tài khoản miễn phí trọn đời • Kích hoạt ngay lập tức
           </span>
         </div>
       </div>

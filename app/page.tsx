@@ -73,7 +73,7 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle Authentication Success (+20k bonus)
+  // Handle Authentication Success
   const handleLoginSuccess = (user: UserProfile, isNewUser: boolean) => {
     setCurrentUser(user);
     setBalance(user.balance);

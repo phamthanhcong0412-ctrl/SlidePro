@@ -175,9 +175,6 @@ export default function Header({
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>Đăng nhập</span>
-            <span className="hidden xs:inline-block text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded-full font-bold">
-              +20k
-            </span>
           </button>
         )}
       </div>
