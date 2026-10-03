@@ -11,8 +11,8 @@ export async function exportToPowerPoint(project: LectureProject): Promise<void>
   pptx.layout = 'LAYOUT_16x9';
   pptx.title = project.title;
   pptx.subject = project.overview;
-  pptx.author = 'SlidePro AI';
-  pptx.company = 'SlidePro Education';
+  pptx.author = 'SlideEdu AI';
+  pptx.company = 'SlideEdu Education';
 
   // Define Theme Colors
   const COLOR_BG_DARK = '0F172A'; // Slate 900
@@ -204,7 +204,7 @@ export async function exportToPowerPoint(project: LectureProject): Promise<void>
     );
 
     // Slide Footer
-    slide.addText(`${project.title} • SlidePro Education`, {
+    slide.addText(`${project.title} • SlideEdu Education`, {
       x: 0.8,
       y: 6.9,
       w: 8.0,
@@ -328,7 +328,7 @@ export async function exportToPowerPoint(project: LectureProject): Promise<void>
     align: 'center'
   });
 
-  endSlide.addText('Bài giảng được tối ưu và xuất tự động bởi SlidePro AI', {
+  endSlide.addText('Bài giảng được tối ưu và xuất tự động bởi SlideEdu AI', {
     x: 1.0,
     y: 4.3,
     w: 11.3,
@@ -341,7 +341,7 @@ export async function exportToPowerPoint(project: LectureProject): Promise<void>
   });
 
   // Write file out
-  const sanitizedName = (project.title || 'SlidePro_BaiGiang')
+  const sanitizedName = (project.title || 'SlideEdu_BaiGiang')
     .replace(/[^\w\s-]/gi, '')
     .trim()
     .replace(/\s+/g, '_');

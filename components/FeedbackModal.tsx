@@ -40,16 +40,16 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             <MessageSquareHeart className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white">Góp ý phát triển SlidePro</h2>
-            <p className="text-xs text-slate-400">Chia sẻ trải nghiệm của bạn để chúng tôi nâng cấp tính năng</p>
+            <h2 className="text-base font-bold text-white">Góp ý phát triển SlideEdu</h2>
+            <p className="text-xs text-slate-400">Chia sẻ trải nghiệm của bạn để chúng tôi nâng cấp tính năng phục vụ giảng dạy</p>
           </div>
         </div>
 
         {isSent ? (
           <div className="py-8 text-center space-y-2 animate-in zoom-in-95">
             <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-            <h3 className="text-sm font-bold text-white">Cảm ơn bạn đã đóng góp ý kiến!</h3>
-            <p className="text-xs text-slate-400">Đội ngũ kỹ thuật SlidePro sẽ xem xét để cải thiện bài giảng tốt hơn.</p>
+            <h3 className="text-sm font-bold text-white">Cảm ơn thầy cô đã đóng góp ý kiến!</h3>
+            <p className="text-xs text-slate-400">Đội ngũ kỹ thuật SlideEdu sẽ xem xét để cải thiện bài giảng tốt hơn.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

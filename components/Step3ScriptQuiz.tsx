@@ -231,7 +231,7 @@ export default function Step3ScriptQuiz({
             <Sparkles className="w-3.5 h-3.5" />
           </div>
           <div className="leading-relaxed">
-            <strong>Kiểm tra lại lời giảng và câu hỏi do SlidePro soạn.</strong>{' '}
+            <strong>Kiểm tra lại lời giảng và câu hỏi do SlideEdu soạn.</strong>{' '}
             Bạn có thể chỉnh sửa nội dung hoặc phát âm thanh thuyết trình bất cứ lúc nào.
           </div>
         </div>
@@ -266,7 +266,7 @@ export default function Step3ScriptQuiz({
             <button
               onClick={() =>
                 handleSpeech(
-                  'Xin chào các bạn, tôi là trợ lý ảo hỗ trợ thuyết trình bài giảng SlidePro.',
+                  'Xin chào các bạn, tôi là trợ lý ảo hỗ trợ thuyết trình bài giảng SlideEdu.',
                   'sample-voice'
                 )
               }
@@ -364,7 +364,7 @@ export default function Step3ScriptQuiz({
                         </ul>
                       </div>
                       <div className="text-[9px] text-slate-400 pt-1 border-t border-slate-100 flex justify-between">
-                        <span>SlidePro PPT</span>
+                        <span>SlideEdu PPT</span>
                         <span>Trang {sIdx + 1}</span>
                       </div>
                     </div>

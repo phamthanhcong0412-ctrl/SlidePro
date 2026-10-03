@@ -204,7 +204,7 @@ export default function Step4Export({
           ))}
         </div>
 
-        {/* Feature highlight box: Why PPTX from SlidePro */}
+        {/* Feature highlight box: Why PPTX from SlideEdu */}
         <div className="bg-[#12192c] border border-cyan-950/80 rounded-xl p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div className="flex items-start gap-2.5">
             <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />

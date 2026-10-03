@@ -451,7 +451,7 @@ export default function Step2Outline({
                     </div>
 
                     <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-200 flex justify-between">
-                      <span>SlidePro Slide View</span>
+                      <span>SlideEdu Slide View</span>
                       <span>Trang {previewSlideIndex + 1}</span>
                     </div>
                   </div>

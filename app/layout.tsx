@@ -2,17 +2,17 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SlidePro - Tạo Slide Bài Giảng từ PDF',
-  description: 'Ứng dụng thông minh chuyển đổi tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx) chuẩn xác.',
+  title: 'SlideEdu - Nền tảng Tạo Slide & Soạn Bài Giảng Giáo Dục từ PDF',
+  description: 'Ứng dụng thông minh phục vụ giáo dục, chuyển đổi giáo án tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất PowerPoint (.pptx).',
   openGraph: {
-    title: 'SlidePro - Tạo Slide Bài Giảng từ PDF',
-    description: 'Ứng dụng thông minh chuyển đổi tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx) chuẩn xác.',
+    title: 'SlideEdu - Nền tảng Tạo Slide & Soạn Bài Giảng Giáo Dục từ PDF',
+    description: 'Ứng dụng thông minh phục vụ giáo dục, chuyển đổi giáo án tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất PowerPoint (.pptx).',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SlidePro - Tạo Slide Bài Giảng từ PDF',
-    description: 'Ứng dụng thông minh chuyển đổi tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx) chuẩn xác.',
+    title: 'SlideEdu - Nền tảng Tạo Slide & Soạn Bài Giảng Giáo Dục từ PDF',
+    description: 'Ứng dụng thông minh phục vụ giáo dục, chuyển đổi giáo án tài liệu PDF thành bài giảng slide sinh động, tự động phân tích dàn ý, tạo kịch bản thuyết trình và xuất PowerPoint (.pptx).',
   },
 };
 

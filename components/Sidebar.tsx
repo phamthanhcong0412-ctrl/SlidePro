@@ -70,7 +70,7 @@ export default function Sidebar({
               <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white">
                 <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <span className="font-bold text-base text-white">SlidePro Menu</span>
+              <span className="font-bold text-base text-white">SlideEdu Menu</span>
             </div>
             <button
               onClick={onClose}

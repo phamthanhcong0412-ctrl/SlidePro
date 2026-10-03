@@ -15,7 +15,7 @@ export default function NotFound() {
           href="/"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-colors"
         >
-          <span>Về trang chủ SlidePro</span>
+          <span>Về trang chủ SlideEdu</span>
         </Link>
       </div>
     </div>

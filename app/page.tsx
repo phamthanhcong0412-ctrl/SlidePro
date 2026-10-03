@@ -81,7 +81,7 @@ export default function HomePage() {
     setIsAuthOpen(false);
 
     if (isNewUser) {
-      setWelcomeToast('Chào mừng bạn đến với SlidePro! Ứng dụng hoàn toàn miễn phí trọn đời, bạn có thể tạo slide bài giảng không giới hạn.');
+      setWelcomeToast('Chào mừng bạn đến với SlideEdu! Ứng dụng hoàn toàn miễn phí trọn đời, bạn có thể tạo slide bài giảng không giới hạn.');
       setTimeout(() => setWelcomeToast(null), 7000);
     }
   };
@@ -355,11 +355,11 @@ export default function HomePage() {
               <h1 className="text-2xl font-bold text-white">Hộp thư thông báo</h1>
               <div className="bg-[#0d1424] border border-slate-800 rounded-2xl p-5 space-y-2 text-xs">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="font-semibold text-cyan-400">Hệ thống SlidePro</span>
+                  <span className="font-semibold text-cyan-400">Hệ thống SlideEdu</span>
                   <span>18:00 Hôm nay</span>
                 </div>
                 <h3 className="text-sm font-bold text-white">
-                  Chào mừng bạn đến với SlidePro - Trợ lý chuyển đổi PDF sang PowerPoint
+                  Chào mừng bạn đến với SlideEdu - Nền tảng Soạn bài giảng & Tạo Slide Giáo dục từ PDF
                 </h3>
                 <p className="text-slate-300 leading-relaxed">
                   Tài khoản của bạn đã được kích hoạt thành công với gói Miễn phí trọn đời. Chúc bạn tạo nên những bài giảng PowerPoint và E-Learning chất lượng cao!

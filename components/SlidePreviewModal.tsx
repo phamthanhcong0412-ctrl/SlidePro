@@ -223,7 +223,7 @@ export default function SlidePreviewModal({
             {/* Slide Footer */}
             <div className="pt-2 sm:pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500">
               <span className="font-semibold text-slate-600 truncate max-w-[200px]">{project.title}</span>
-              <span>SlidePro Education</span>
+              <span>SlideEdu Education</span>
             </div>
           </div>
         </div>

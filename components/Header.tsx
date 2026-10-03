@@ -59,10 +59,10 @@ export default function Header({
           </div>
           <div className="flex items-baseline gap-1 min-w-0">
             <span className="font-bold text-lg sm:text-xl tracking-tight text-white font-sans truncate">
-              Slide<span className="text-cyan-400">Pro</span>
+              Slide<span className="text-cyan-400">Edu</span>
             </span>
             <span className="hidden sm:inline-block text-[10px] uppercase font-semibold text-cyan-500/80 bg-cyan-950/80 border border-cyan-800/50 px-1.5 py-0.2 rounded shrink-0">
-              AI PPTX
+              EDU AI
             </span>
           </div>
         </div>

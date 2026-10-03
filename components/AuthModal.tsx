@@ -151,16 +151,16 @@ export default function AuthModal({
         <div className="text-center space-y-2 mb-5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-xs font-semibold mb-1">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>SlidePro AI Platform</span>
+            <span>SlideEdu • Nền tảng Giáo dục Thông minh</span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-            {tab === 'register' ? 'Đăng ký tài khoản mới' : 'Đăng nhập vào SlidePro'}
+            {tab === 'register' ? 'Đăng ký tài khoản giáo viên' : 'Đăng nhập vào SlideEdu'}
           </h2>
           <p className="text-xs text-slate-400">
             {tab === 'register'
-              ? 'Tạo tài khoản để bắt đầu chuyển đổi PDF sang slide PowerPoint chuyên nghiệp'
-              : 'Chào mừng bạn quay lại với hệ thống tạo bài giảng SlidePro'}
+              ? 'Tạo tài khoản miễn phí để chuyển đổi giáo án PDF sang slide PowerPoint giảng dạy'
+              : 'Chào mừng thầy cô quay lại với hệ thống tạo bài giảng SlideEdu'}
           </p>
         </div>
 
@@ -171,10 +171,10 @@ export default function AuthModal({
           </div>
           <div className="text-xs">
             <span className="font-bold text-emerald-300 block">
-              MIỄN PHÍ TRỌN ĐỜI • DUNG LƯỢNG 5 GB
+              MIỄN PHÍ DÀNH CHO GIÁO DỤC • DUNG LƯỢNG 5 GB
             </span>
             <span className="text-slate-300 text-[11px]">
-              Tạo bài giảng và xuất file PowerPoint (.pptx) không giới hạn lượt dùng.
+              Soạn giáo án, tạo slide và xuất file PowerPoint (.pptx) không giới hạn lượt dùng.
             </span>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function AuthModal({
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div>
               <strong className="block text-emerald-300">Đăng ký thành công!</strong>
-              <span>Tài khoản của bạn đã được kích hoạt gói <strong>Miễn phí trọn đời (5 GB)</strong>.</span>
+              <span>Tài khoản giáo viên đã được kích hoạt gói <strong>Miễn phí trọn đời (5 GB)</strong>.</span>
             </div>
           </div>
         )}
@@ -195,10 +195,10 @@ export default function AuthModal({
           type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading}
-          className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md group cursor-pointer mb-4 hover:shadow-lg active:scale-[0.99]"
+          className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg active:scale-[0.99] border border-slate-200/90 group cursor-pointer mb-4"
         >
           {/* Official Google Icon SVG */}
-          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -216,7 +216,7 @@ export default function AuthModal({
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span className="text-slate-800 font-medium">Tiếp tục với Google</span>
+          <span className="text-slate-800 font-semibold">Tiếp tục với Google</span>
         </button>
 
         {/* Divider */}
