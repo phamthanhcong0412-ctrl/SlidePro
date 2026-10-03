@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Mail,
@@ -11,9 +11,6 @@ import {
   ShieldCheck,
   Zap,
   X,
-  Settings,
-  ExternalLink,
-  Key
 } from 'lucide-react';
 import { UserProfile } from '@/types/presentation';
 import confetti from 'canvas-confetti';
@@ -23,24 +20,6 @@ interface AuthModalProps {
   onClose?: () => void;
   onLoginSuccess: (user: UserProfile, isNewUser: boolean) => void;
   isGate?: boolean; // If true, cannot close without authenticating
-}
-
-// Helper to decode Google JWT token securely
-function parseJwt(token: string) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error('Lỗi giải mã JWT:', e);
-    return null;
-  }
 }
 
 export default function AuthModal({
@@ -55,189 +34,53 @@ export default function AuthModal({
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showBonusAlert, setShowBonusAlert] = useState(false);
-  const [showGoogleConfig, setShowGoogleConfig] = useState(false);
-  const [customClientId, setCustomClientId] = useState('');
-  const [quickGmail, setQuickGmail] = useState('');
-  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load saved Google Client ID if any
-  const envClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
-  const [activeClientId, setActiveClientId] = useState<string>(envClientId);
-
+  // Listen for Google Auth callback message from popup window
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('slidepro_google_client_id');
-      if (saved) {
-        setActiveClientId(saved);
-        setCustomClientId(saved);
-      } else if (envClientId && envClientId !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
-        setActiveClientId(envClientId);
-      }
-    }
-  }, [envClientId]);
+    const handleAuthMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GOOGLE_AUTH_SUCCESS' && event.data?.user) {
+        setIsLoading(false);
+        setShowBonusAlert(true);
 
-  // Load Google Identity Services script dynamically
-  useEffect(() => {
-    if (!isOpen || typeof window === 'undefined') return;
-
-    if (!document.getElementById('google-gsi-client')) {
-      const script = document.createElement('script');
-      script.id = 'google-gsi-client';
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        initializeGoogleGSI();
-      };
-      document.body.appendChild(script);
-    } else {
-      initializeGoogleGSI();
-    }
-  }, [isOpen, activeClientId]);
-
-  // Initialize Google GSI if valid client ID is present
-  const initializeGoogleGSI = () => {
-    if (typeof window === 'undefined') return;
-    const google = (window as any).google;
-    if (
-      google?.accounts?.id &&
-      activeClientId &&
-      activeClientId.includes('.apps.googleusercontent.com')
-    ) {
-      try {
-        google.accounts.id.initialize({
-          client_id: activeClientId,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false,
-        });
-
-        if (googleBtnContainerRef.current) {
-          googleBtnContainerRef.current.innerHTML = '';
-          google.accounts.id.renderButton(googleBtnContainerRef.current, {
-            theme: 'filled_blue',
-            size: 'large',
-            text: 'continue_with',
-            shape: 'pill',
-            width: 320,
+        try {
+          confetti({
+            particleCount: 60,
+            spread: 70,
+            origin: { y: 0.6 },
           });
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        console.warn('Google GSI init notice:', e);
+
+        setTimeout(() => {
+          onLoginSuccess(event.data.user, true);
+        }, 700);
       }
-    }
-  };
-
-  // Callback from real Google OAuth token
-  const handleGoogleCredentialResponse = (response: any) => {
-    if (!response || !response.credential) return;
-
-    setIsLoading(true);
-    const payload = parseJwt(response.credential);
-    if (!payload || !payload.email) {
-      setIsLoading(false);
-      alert('Không nhận được thông tin xác thực từ Google. Vui lòng thử lại!');
-      return;
-    }
-
-    const newUser: UserProfile = {
-      id: `usr-google-${payload.sub || Date.now()}`,
-      name: payload.name || payload.email.split('@')[0],
-      email: payload.email,
-      avatar: (payload.name || payload.email).substring(0, 2).toUpperCase(),
-      picture: payload.picture, // Real Google profile avatar URL
-      balance: 20000,
-      isGoogle: true,
-      createdAt: new Date().toISOString().split('T')[0],
     };
 
-    setIsLoading(false);
-    setShowBonusAlert(true);
+    window.addEventListener('message', handleAuthMessage);
+    return () => window.removeEventListener('message', handleAuthMessage);
+  }, [onLoginSuccess]);
 
-    try {
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    } catch (e) {
-      // ignore
-    }
-
-    setTimeout(() => {
-      onLoginSuccess(newUser, true);
-    }, 800);
-  };
-
-  // Trigger Google Login action
-  const handleGoogleLoginClick = () => {
-    const google = typeof window !== 'undefined' ? (window as any).google : null;
-
-    if (
-      google?.accounts?.id &&
-      activeClientId &&
-      activeClientId.includes('.apps.googleusercontent.com')
-    ) {
-      // Open real Google prompt
-      google.accounts.id.prompt();
-    } else {
-      // Show Google Real Sign-In Setup helper or quick Gmail option
-      setShowGoogleConfig(true);
-    }
-  };
-
-  // Save custom Google Client ID
-  const handleSaveGoogleClientId = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customClientId.trim()) return;
-    const cleaned = customClientId.trim();
-    localStorage.setItem('slidepro_google_client_id', cleaned);
-    setActiveClientId(cleaned);
-    setShowGoogleConfig(false);
-
-    // Initialize with the new ID
-    setTimeout(() => {
-      initializeGoogleGSI();
-      const google = (window as any).google;
-      if (google?.accounts?.id) {
-        google.accounts.id.prompt();
-      }
-    }, 400);
-  };
-
-  // Quick Google Test Sign In with custom email
-  const handleQuickGoogleTest = (customMail?: string) => {
+  // Handle Google Login Click (Opens authentic Google Login Page / Popup)
+  const handleGoogleLogin = () => {
     setIsLoading(true);
-    const targetEmail = customMail || quickGmail.trim() || 'user.google@gmail.com';
-    const targetName = targetEmail.split('@')[0];
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowBonusAlert(true);
+    const width = 500;
+    const height = 650;
+    const left = typeof window !== 'undefined' ? window.screenX + (window.outerWidth - width) / 2 : 100;
+    const top = typeof window !== 'undefined' ? window.screenY + (window.outerHeight - height) / 2 : 100;
 
-      const newUser: UserProfile = {
-        id: `usr-google-${Date.now()}`,
-        name: targetName.charAt(0).toUpperCase() + targetName.slice(1),
-        email: targetEmail,
-        avatar: targetName.substring(0, 2).toUpperCase(),
-        balance: 20000,
-        isGoogle: true,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
+    const popup = window.open(
+      '/auth/google',
+      'GoogleSignIn',
+      `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,scrollbars=yes`
+    );
 
-      try {
-        confetti({
-          particleCount: 60,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
-      } catch (e) {
-        // ignore
-      }
-
-      setTimeout(() => {
-        onLoginSuccess(newUser, true);
-      }, 700);
-    }, 500);
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      // Fallback: If popup is blocked by browser, redirect directly
+      window.location.href = '/auth/google?redirect=/';
+    }
   };
 
   // Email Register Submission
@@ -273,7 +116,7 @@ export default function AuthModal({
 
       setTimeout(() => {
         onLoginSuccess(newUser, true);
-      }, 1000);
+      }, 800);
     }, 600);
   };
 
@@ -362,110 +205,34 @@ export default function AuthModal({
           </div>
         )}
 
-        {/* Real Google Login Section */}
-        <div className="space-y-2 mb-4">
-          {/* Render container for official Google button if configured */}
-          <div ref={googleBtnContainerRef} className="flex justify-center empty:hidden" />
-
-          {/* Fallback button if official GSI button isn't rendered */}
-          <button
-            type="button"
-            onClick={handleGoogleLoginClick}
-            disabled={isLoading}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-500 text-slate-100 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md group cursor-pointer"
-          >
-            {/* Official Google Icon SVG */}
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-            <span>Tiếp tục với Google (Miễn phí)</span>
-          </button>
-        </div>
-
-        {/* Google Real Setup Drawer Modal */}
-        {showGoogleConfig && (
-          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-4 mb-4 text-xs space-y-3 animate-in fade-in-50 duration-200">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-cyan-400" />
-                Cấu hình Đăng nhập Google thật (OAuth 2.0)
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowGoogleConfig(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              Để dùng Google thật, bạn lấy <strong>Google Client ID</strong> miễn phí từ{' '}
-              <a
-                href="https://console.cloud.google.com/apis/credentials"
-                target="_blank"
-                rel="noreferrer"
-                className="text-cyan-400 underline inline-flex items-center gap-0.5 font-medium"
-              >
-                Google Cloud Console <ExternalLink className="w-3 h-3" />
-              </a>{' '}
-              rồi dán vào bên dưới:
-            </p>
-
-            <form onSubmit={handleSaveGoogleClientId} className="space-y-2">
-              <input
-                type="text"
-                value={customClientId}
-                onChange={(e) => setCustomClientId(e.target.value)}
-                placeholder="xxxx.apps.googleusercontent.com"
-                className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500 font-mono"
-              />
-              <button
-                type="submit"
-                className="w-full py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold text-white text-xs transition-colors"
-              >
-                Lưu Client ID & Đăng nhập Google thật
-              </button>
-            </form>
-
-            <div className="pt-2 border-t border-slate-800 space-y-1.5">
-              <div className="text-[11px] text-slate-400">
-                Hoặc vào dùng ngay với Gmail của bạn (chế độ nhanh):
-              </div>
-              <div className="flex gap-1.5">
-                <input
-                  type="email"
-                  value={quickGmail}
-                  onChange={(e) => setQuickGmail(e.target.value)}
-                  placeholder="emailcuaban@gmail.com"
-                  className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleQuickGoogleTest()}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs whitespace-nowrap"
-                >
-                  Vào ngay
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Google Login Button - Opens Standard Google OAuth Login Page */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-3 transition-all shadow-md group cursor-pointer mb-4 hover:shadow-lg active:scale-[0.99]"
+        >
+          {/* Official Google Icon SVG */}
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
+          </svg>
+          <span className="text-slate-800 font-medium">Tiếp tục với Google</span>
+        </button>
 
         {/* Divider */}
         <div className="relative my-4">
