@@ -16,10 +16,9 @@ import {
 import { UserProfile } from '@/types/presentation';
 
 interface HeaderProps {
-  balance: number;
+  balance?: number;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
-  onOpenRecharge: () => void;
   onNewLecture: () => void;
   user: UserProfile | null;
   onOpenAuth: () => void;
@@ -27,10 +26,8 @@ interface HeaderProps {
 }
 
 export default function Header({
-  balance,
   isSidebarOpen,
   onToggleSidebar,
-  onOpenRecharge,
   onNewLecture,
   user,
   onOpenAuth,
@@ -46,7 +43,7 @@ export default function Header({
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 active:bg-slate-800 transition-colors"
+          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 active:bg-slate-800 transition-colors cursor-pointer"
           title={isSidebarOpen ? 'Thu gọn thanh bên' : 'Mở rộng thanh bên'}
           aria-label="Toggle navigation menu"
         >
@@ -73,18 +70,14 @@ export default function Header({
 
       {/* Right Controls */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Balance Display */}
-        <button
-          onClick={onOpenRecharge}
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-lg bg-slate-900 border border-slate-700/70 hover:border-cyan-500/60 text-slate-200 text-xs sm:text-sm font-medium transition-all group"
-          title="Nạp thêm tiền vào tài khoản"
-        >
-          <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="font-semibold">{balance.toLocaleString('vi-VN')} đ</span>
-          <span className="hidden sm:inline-block text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-            + Nạp
+        {/* Free Forever Plan Badge */}
+        <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <span className="font-semibold">Miễn phí</span>
+          <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+            Trọn đời
           </span>
-        </button>
+        </div>
 
         {/* Language Switcher - compact on mobile */}
         <button
@@ -117,7 +110,7 @@ export default function Header({
               </div>
               <div className="hidden md:block text-xs">
                 <div className="font-semibold text-slate-200 max-w-[100px] truncate">{user.name}</div>
-                <div className="text-[10px] text-cyan-400 font-medium">Thành viên mới (+20k)</div>
+                <div className="text-[10px] text-emerald-400 font-medium">Gói Miễn phí trọn đời</div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
@@ -128,8 +121,8 @@ export default function Header({
                 <div className="px-3.5 py-2.5 border-b border-slate-800">
                   <div className="font-semibold text-white truncate">{user.name}</div>
                   <div className="text-[11px] text-slate-400 truncate">{user.email}</div>
-                  <div className="text-[11px] text-amber-400 font-bold mt-1">
-                    Số dư: {balance.toLocaleString('vi-VN')} đ
+                  <div className="text-[11px] text-emerald-400 font-bold mt-1">
+                    Gói sử dụng: Miễn phí không giới hạn
                   </div>
                 </div>
 

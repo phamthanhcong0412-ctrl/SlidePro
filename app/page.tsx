@@ -10,14 +10,13 @@ import Step3ScriptQuiz from '@/components/Step3ScriptQuiz';
 import Step4Export from '@/components/Step4Export';
 import ConfirmModal from '@/components/ConfirmModal';
 import SlidePreviewModal from '@/components/SlidePreviewModal';
-import RechargeModal from '@/components/RechargeModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import LibraryModal from '@/components/LibraryModal';
 import AccountView from '@/components/AccountView';
 import AuthModal from '@/components/AuthModal';
 import { SAMPLE_PROJECTS } from '@/lib/sampleData';
 import { LectureProject, StepType, UserProfile } from '@/types/presentation';
-import { Gift, CheckCircle2, X, Sparkles, FolderKanban, CreditCard, User } from 'lucide-react';
+import { Gift, CheckCircle2, X, Sparkles, FolderKanban, Receipt, User } from 'lucide-react';
 
 export default function HomePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -29,7 +28,7 @@ export default function HomePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [welcomeToast, setWelcomeToast] = useState<string | null>(null);
 
-  // Balance defaults to 20.000 đ for newly registered users, or loaded from user profile
+  // Balance
   const [balance, setBalance] = useState(20000);
 
   // Active project - defaults to medical lecture matching user screenshots
@@ -39,7 +38,6 @@ export default function HomePage() {
   // Modals state
   const [confirmModalMode, setConfirmModalMode] = useState<'outline_to_script' | 'script_to_package' | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Check localStorage and screen width on mount
@@ -83,7 +81,7 @@ export default function HomePage() {
     setIsAuthOpen(false);
 
     if (isNewUser) {
-      setWelcomeToast('Chào mừng bạn đến với SlidePro! Bạn đã được cộng +20.000 đ vào tài khoản để trải nghiệm tạo slide bài giảng miễn phí.');
+      setWelcomeToast('Chào mừng bạn đến với SlidePro! Ứng dụng hoàn toàn miễn phí trọn đời, bạn có thể tạo slide bài giảng không giới hạn.');
       setTimeout(() => setWelcomeToast(null), 7000);
     }
   };
@@ -220,19 +218,19 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#090d18] text-slate-100 flex flex-col font-sans relative">
-      {/* Welcome Toast Notification when receiving +20k bonus */}
+      {/* Welcome Toast Notification */}
       {welcomeToast && (
         <div className="fixed top-20 right-5 z-50 max-w-md bg-gradient-to-r from-emerald-950 to-[#0e1f1c] border border-emerald-500/80 rounded-2xl p-4 shadow-2xl flex items-start gap-3 animate-in slide-in-from-top-4 duration-300">
           <div className="w-8 h-8 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0">
-            <Gift className="w-4 h-4 stroke-[2.5]" />
+            <Sparkles className="w-4 h-4 stroke-[2.5]" />
           </div>
           <div className="flex-1 text-xs">
-            <strong className="text-emerald-300 font-bold block mb-0.5">Tặng 20.000 đ thành công!</strong>
+            <strong className="text-emerald-300 font-bold block mb-0.5">Kích hoạt tài khoản thành công!</strong>
             <p className="text-slate-200 leading-relaxed">{welcomeToast}</p>
           </div>
           <button
             onClick={() => setWelcomeToast(null)}
-            className="text-slate-400 hover:text-white p-1 rounded-lg"
+            className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -244,7 +242,6 @@ export default function HomePage() {
         balance={balance}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        onOpenRecharge={() => setIsRechargeOpen(true)}
         onNewLecture={handleNewLecture}
         user={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -260,7 +257,6 @@ export default function HomePage() {
           activeView={activeView}
           setActiveView={setActiveView}
           balance={balance}
-          onOpenRecharge={() => setIsRechargeOpen(true)}
           onOpenFeedback={() => setIsFeedbackOpen(true)}
           onNewLecture={handleNewLecture}
           user={currentUser}
@@ -290,7 +286,6 @@ export default function HomePage() {
                   project={currentProject}
                   onUpdateProject={setCurrentProject}
                   onContinue={handleOpenConfirmFromStep2}
-                  onOpenRecharge={() => setIsRechargeOpen(true)}
                 />
               )}
 
@@ -339,7 +334,6 @@ export default function HomePage() {
             <AccountView
               type="history"
               balance={balance}
-              onOpenRecharge={() => setIsRechargeOpen(true)}
               user={currentUser}
               onLogout={handleLogout}
               projects={savedProjects}
@@ -350,7 +344,6 @@ export default function HomePage() {
             <AccountView
               type="account"
               balance={balance}
-              onOpenRecharge={() => setIsRechargeOpen(true)}
               user={currentUser}
               onLogout={handleLogout}
               projects={savedProjects}
@@ -369,7 +362,7 @@ export default function HomePage() {
                   Chào mừng bạn đến với SlidePro - Trợ lý chuyển đổi PDF sang PowerPoint
                 </h3>
                 <p className="text-slate-300 leading-relaxed">
-                  Tài khoản của bạn đã được kích hoạt thành công và được tặng 20.000 đ vào số dư trải nghiệm. Chúc bạn tạo nên những bài giảng PowerPoint và E-Learning chất lượng cao!
+                  Tài khoản của bạn đã được kích hoạt thành công với gói Miễn phí trọn đời. Chúc bạn tạo nên những bài giảng PowerPoint và E-Learning chất lượng cao!
                 </p>
               </div>
             </div>
@@ -383,7 +376,7 @@ export default function HomePage() {
           onClick={() => {
             setActiveView('editor');
           }}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors ${
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors cursor-pointer ${
             activeView === 'editor' ? 'text-cyan-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -395,7 +388,7 @@ export default function HomePage() {
           onClick={() => {
             setActiveView('library');
           }}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors ${
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors cursor-pointer ${
             activeView === 'library' ? 'text-cyan-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -405,19 +398,21 @@ export default function HomePage() {
 
         <button
           onClick={() => {
-            setIsRechargeOpen(true);
+            setActiveView('history');
           }}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] text-amber-400 hover:text-amber-300 transition-colors"
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors cursor-pointer ${
+            activeView === 'history' ? 'text-cyan-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+          }`}
         >
-          <CreditCard className="w-4 h-4 mb-0.5" />
-          <span className="text-[10px]">Nạp tiền</span>
+          <Receipt className="w-4 h-4 mb-0.5" />
+          <span className="text-[10px]">Nhật ký</span>
         </button>
 
         <button
           onClick={() => {
             setActiveView('account');
           }}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors ${
+          className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg min-h-[44px] transition-colors cursor-pointer ${
             activeView === 'account' ? 'text-cyan-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -452,13 +447,6 @@ export default function HomePage() {
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         project={currentProject}
-      />
-
-      {/* Recharge Modal */}
-      <RechargeModal
-        isOpen={isRechargeOpen}
-        onClose={() => setIsRechargeOpen(false)}
-        onAddBalance={handleAddBalance}
       />
 
       {/* Feedback Modal */}

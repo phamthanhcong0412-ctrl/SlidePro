@@ -165,28 +165,28 @@ export default function AuthModal({
           </p>
         </div>
 
-        {/* Promotional +20k Bonus Highlight Banner */}
-        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 border border-amber-500/40 rounded-2xl p-3.5 mb-5 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 font-black shadow-md shadow-amber-500/30">
-            <Gift className="w-5 h-5 text-slate-950 stroke-[2.5]" />
+        {/* Free Plan Welcome Highlight Banner */}
+        <div className="bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-blue-500/10 border border-emerald-500/40 rounded-2xl p-3.5 mb-5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center shrink-0 font-black shadow-md shadow-emerald-500/30">
+            <Sparkles className="w-5 h-5 text-slate-950 stroke-[2.5]" />
           </div>
           <div className="text-xs">
-            <span className="font-bold text-amber-300 block">
-              TẶNG NGAY 20.000 đ VÀO TÀI KHOẢN
+            <span className="font-bold text-emerald-300 block">
+              MIỄN PHÍ TRỌN ĐỜI • TẠO SLIDE KHÔNG GIỚI HẠN
             </span>
             <span className="text-slate-300 text-[11px]">
-              Dành riêng cho mỗi tài khoản tạo mới để trải nghiệm tạo slide & xuất PowerPoint!
+              Trải nghiệm toàn diện tính năng phân tích PDF, tạo dàn ý, kịch bản giảng bài và xuất file PowerPoint (.pptx).
             </span>
           </div>
         </div>
 
-        {/* Bonus Granted Notification Toast */}
+        {/* Welcome Notification Toast */}
         {showBonusAlert && (
           <div className="bg-emerald-950/90 border border-emerald-500/80 rounded-2xl p-3 mb-4 text-xs text-emerald-200 flex items-center gap-2 animate-in zoom-in-95">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div>
-              <strong className="block text-emerald-300">Chúc mừng bạn!</strong>
-              <span>Đã cộng thành công <strong>+20.000 đ</strong> vào số dư của bạn.</span>
+              <strong className="block text-emerald-300">Đăng ký thành công!</strong>
+              <span>Tài khoản của bạn đã được kích hoạt gói <strong>Miễn phí trọn đời</strong>.</span>
             </div>
           </div>
         )}
@@ -217,7 +217,7 @@ export default function AuthModal({
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Tiếp tục với Google (+20.000 đ)</span>
+          <span>Tiếp tục với Google (Miễn phí)</span>
         </button>
 
         {/* Divider */}

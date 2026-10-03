@@ -7,8 +7,7 @@ import { calculateTotalStorageMb, formatStorageDisplay } from '@/lib/storageUtil
 
 interface AccountViewProps {
   type: 'account' | 'history';
-  balance: number;
-  onOpenRecharge: () => void;
+  balance?: number;
   user?: UserProfile | null;
   onLogout?: () => void;
   projects?: LectureProject[];
@@ -16,17 +15,15 @@ interface AccountViewProps {
 
 export default function AccountView({
   type,
-  balance,
-  onOpenRecharge,
   user,
   onLogout,
   projects = [],
 }: AccountViewProps) {
   const storage = formatStorageDisplay(calculateTotalStorageMb(projects));
-  const transactions = [
-    { id: 'TX-9025', desc: 'Thưởng chào mừng thành viên mới (+20k Demo)', amount: '+20.000 đ', time: 'Vừa xong', status: 'Thành công' },
-    { id: 'TX-9012', desc: 'Trừ phí tạo slide bài giảng Y khoa chèn ép tim (3 slide)', amount: '-5.040 đ', time: 'Hôm nay 18:02', status: 'Thành công' },
-    { id: 'TX-8910', desc: 'Nạp tiền tài khoản SlidePro (Thẻ ngân hàng)', amount: '+50.000 đ', time: 'Hôm qua 14:30', status: 'Thành công' },
+  const activities = [
+    { id: 'ACT-9025', desc: 'Khởi tạo tài khoản giảng viên & kích hoạt quyền tạo slide không giới hạn', type: 'Tài khoản', time: 'Vừa xong', status: 'Hoạt động' },
+    { id: 'ACT-9012', desc: 'Biên soạn bài giảng Y khoa chèn ép tim cấp (3 slide, 2 câu trắc nghiệm)', type: 'Tạo slide', time: 'Hôm nay 18:02', status: 'Hoàn tất' },
+    { id: 'ACT-8910', desc: 'Xuất file thuyết trình chuẩn Microsoft PowerPoint (.pptx)', type: 'Xuất PPTX', time: 'Hôm qua 14:30', status: 'Thành công' },
   ];
 
   if (type === 'history') {
@@ -36,38 +33,30 @@ export default function AccountView({
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
-              <span>Lịch sử giao dịch</span>
+              <span>Nhật ký hoạt động</span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">Danh sách các khoản nạp tiền, quà tặng thành viên mới và phí tạo slide bài giảng AI</p>
+            <p className="text-xs text-slate-400 mt-1">Lịch sử tạo slide bài giảng, phân tích tài liệu PDF và xuất PowerPoint</p>
           </div>
-
-          <button
-            onClick={onOpenRecharge}
-            className="self-start sm:self-auto min-h-[40px] px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Nạp thêm tiền</span>
-          </button>
         </div>
 
         <div className="bg-[#0d1424] border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800">
-          {transactions.map((tx) => (
-            <div key={tx.id} className="p-3.5 sm:p-4 flex items-center justify-between hover:bg-slate-900/40 transition-colors text-xs gap-3">
+          {activities.map((act) => (
+            <div key={act.id} className="p-3.5 sm:p-4 flex items-center justify-between hover:bg-slate-900/40 transition-colors text-xs gap-3">
               <div className="space-y-1 min-w-0">
-                <div className="font-semibold text-slate-200 truncate">{tx.desc}</div>
+                <div className="font-semibold text-slate-200 truncate">{act.desc}</div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-2">
-                  <span>Mã: {tx.id}</span>
+                  <span>Mã: {act.id}</span>
                   <span>•</span>
-                  <span>{tx.time}</span>
+                  <span>{act.time}</span>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
-                <div className={`font-bold ${tx.amount.startsWith('+') ? 'text-emerald-400' : 'text-slate-300'}`}>
-                  {tx.amount}
+                <div className="font-semibold text-cyan-300">
+                  {act.type}
                 </div>
                 <span className="text-[10px] text-emerald-400/80 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-900/60">
-                  {tx.status}
+                  {act.status}
                 </span>
               </div>
             </div>
@@ -108,25 +97,22 @@ export default function AccountView({
             <h3 className="text-base font-bold text-white">{user?.name || 'Pixels'}</h3>
             <p className="text-xs text-slate-400">{user?.email || 'mrpixelvns@gmail.com'}</p>
           </div>
-          <div className="pt-2 border-t border-slate-800 text-xs text-cyan-400 font-semibold">
-            {user?.isGoogle ? 'Đăng nhập Google • Tài khoản Mới' : 'Tài khoản Giảng viên Tiêu chuẩn'}
+          <div className="pt-2 border-t border-slate-800 text-xs text-emerald-400 font-semibold">
+            {user?.isGoogle ? 'Đăng nhập Google • Miễn phí trọn đời' : 'Tài khoản Giảng viên Tiêu chuẩn'}
           </div>
         </div>
 
         <div className="md:col-span-2 bg-[#0d1424] border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
             <div>
-              <span className="text-xs font-semibold text-slate-400 block">Số dư khả dụng</span>
-              <span className="text-[11px] text-emerald-400 font-medium">✓ Đã nhận ưu đãi +20.000 đ cho tài khoản mới</span>
+              <span className="text-xs font-semibold text-slate-400 block">Gói tài khoản</span>
+              <span className="text-[11px] text-emerald-400 font-medium">✓ Miễn phí 100% trọn đời • Không giới hạn lượt tạo slide</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <span className="text-base sm:text-lg font-bold text-white">{balance.toLocaleString('vi-VN')} đ</span>
-              <button
-                onClick={onOpenRecharge}
-                className="min-h-[36px] px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs font-semibold cursor-pointer"
-              >
-                Nạp tiền
-              </button>
+              <span className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                Đang kích hoạt
+              </span>
             </div>
           </div>
 

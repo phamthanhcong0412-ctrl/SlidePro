@@ -21,8 +21,7 @@ interface SidebarProps {
   onClose?: () => void;
   activeView: 'editor' | 'library' | 'inbox' | 'history' | 'account';
   setActiveView: (view: 'editor' | 'library' | 'inbox' | 'history' | 'account') => void;
-  balance: number;
-  onOpenRecharge: () => void;
+  balance?: number;
   onOpenFeedback: () => void;
   onNewLecture: () => void;
   user?: UserProfile | null;
@@ -35,8 +34,6 @@ export default function Sidebar({
   onClose,
   activeView,
   setActiveView,
-  balance,
-  onOpenRecharge,
   onOpenFeedback,
   onNewLecture,
   user,
@@ -45,7 +42,6 @@ export default function Sidebar({
 }: SidebarProps) {
   if (!isOpen) return null;
 
-  const isLowBalance = balance < 5000;
   const storageInfo = formatStorageDisplay(calculateTotalStorageMb(projects));
 
   const handleItemClick = (action: () => void) => {
@@ -166,37 +162,24 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Balance Card matching user screenshots */}
+          {/* Subscription Status Card */}
           <div className="p-3.5 rounded-xl bg-[#101728] border border-slate-800/80 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-400">Số dư</span>
-              {isLowBalance ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  Sắp hết
-                </span>
-              ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  Tài khoản mới +20k
-                </span>
-              )}
+              <span className="text-xs font-medium text-slate-400">Gói sử dụng</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Miễn phí trọn đời
+              </span>
             </div>
 
             <div>
-              <div className="text-xl font-bold text-white tracking-tight">
-                {balance.toLocaleString('vi-VN')} đ
+              <div className="text-sm font-bold text-white tracking-tight flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                Tạo slide không giới hạn
               </div>
               <div className="text-[11px] text-slate-400 mt-0.5">
-                Tạo được khoảng {Math.max(1, Math.floor(balance / 2000))} slide bài giảng
+                Đầy đủ tính năng phân tích AI & xuất PPTX
               </div>
             </div>
-
-            <button
-              onClick={() => handleItemClick(onOpenRecharge)}
-              className="w-full min-h-[40px] py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-sm active:bg-blue-700"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Nạp tiền</span>
-            </button>
 
             {/* Storage Capacity Bar */}
             <div className="pt-2 border-t border-slate-800/70 space-y-1.5">

@@ -28,14 +28,12 @@ interface Step2OutlineProps {
   project: LectureProject;
   onUpdateProject: (updated: LectureProject) => void;
   onContinue: () => void;
-  onOpenRecharge: () => void;
 }
 
 export default function Step2Outline({
   project,
   onUpdateProject,
   onContinue,
-  onOpenRecharge,
 }: Step2OutlineProps) {
   const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
   const [previewSlideIndex, setPreviewSlideIndex] = useState(0);
@@ -481,31 +479,22 @@ export default function Step2Outline({
         </div>
       </div>
 
-      {/* Bottom Sticky Action Bar matching Screenshot 2 */}
+      {/* Bottom Sticky Action Bar */}
       <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
-          <span className="text-slate-400 font-medium">
-            Tổng đã sử dụng: <strong className="text-slate-200">5.040 đ</strong>
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-medium">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            Tạo bài giảng AI không giới hạn
           </span>
-
-          {/* Balance Alert Box */}
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-950/40 border border-red-800/50 text-red-300">
-            <span className="text-[11px] sm:text-xs leading-tight">Không đủ tiền để hoàn thành Phần 1. Nạp thêm khoảng 2.459 đ</span>
-            <button
-              onClick={onOpenRecharge}
-              className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold flex items-center gap-1 transition-colors shrink-0 min-h-[32px]"
-            >
-              <CreditCard className="w-3 h-3" />
-              Nạp tiền
-            </button>
-          </div>
+          <span className="hidden sm:inline text-slate-500">•</span>
+          <span className="hidden sm:inline">Đã cấu hình {project.units.length} phần kiến thức</span>
         </div>
 
         <button
           onClick={onContinue}
-          className="min-h-[44px] px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
+          className="min-h-[44px] px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 cursor-pointer"
         >
-          <span>Tiếp tục</span>
+          <span>Tiếp tục soạn kịch bản & câu hỏi</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
