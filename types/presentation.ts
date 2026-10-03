@@ -3,6 +3,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatar: string;
+  picture?: string;
   balance: number;
   isGoogle: boolean;
   createdAt: string;

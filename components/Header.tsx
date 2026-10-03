@@ -105,9 +105,18 @@ export default function Header({
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-1.5 sm:gap-2 p-1 min-h-[40px] rounded-xl hover:bg-slate-800/70 transition-colors text-left"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-2 ring-slate-800 shrink-0">
-                {user.avatar || 'PI'}
-              </div>
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover shadow-sm ring-2 ring-cyan-500/50 shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-2 ring-slate-800 shrink-0">
+                  {user.avatar || 'PI'}
+                </div>
+              )}
               <div className="hidden md:block text-xs">
                 <div className="font-semibold text-slate-200 max-w-[100px] truncate">{user.name}</div>
                 <div className="text-[10px] text-emerald-400 font-medium">Gói Miễn phí trọn đời</div>

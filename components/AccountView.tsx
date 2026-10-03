@@ -90,9 +90,18 @@ export default function AccountView({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         <div className="md:col-span-1 bg-[#0d1424] border border-slate-800 rounded-2xl p-5 sm:p-6 text-center space-y-4">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-lg sm:text-xl font-bold text-white shadow-xl mx-auto ring-4 ring-slate-800">
-            {user?.avatar || 'PI'}
-          </div>
+          {user?.picture ? (
+            <img
+              src={user.picture}
+              alt={user.name}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shadow-xl mx-auto ring-4 ring-cyan-500/40"
+            />
+          ) : (
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-lg sm:text-xl font-bold text-white shadow-xl mx-auto ring-4 ring-slate-800">
+              {user?.avatar || 'PI'}
+            </div>
+          )}
           <div>
             <h3 className="text-base font-bold text-white">{user?.name || 'Pixels'}</h3>
             <p className="text-xs text-slate-400">{user?.email || 'mrpixelvns@gmail.com'}</p>

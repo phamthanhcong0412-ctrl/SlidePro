@@ -1,7 +1,7 @@
 import { LectureProject } from '@/types/presentation';
 
-// Total quota capacity for demo tier: 1 GB (1024 MB)
-export const TOTAL_STORAGE_CAPACITY_MB = 1024;
+// Total quota capacity: 5 GB (5120 MB)
+export const TOTAL_STORAGE_CAPACITY_MB = 5120;
 
 // Base platform system overhead (slide themes, font bundles, voice speech cache): 4.8 MB
 export const BASE_SYSTEM_STORAGE_MB = 4.8;
