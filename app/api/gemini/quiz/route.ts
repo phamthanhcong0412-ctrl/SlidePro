@@ -69,7 +69,7 @@ Yêu cầu định dạng JSON:
 LƯU Ý: Chỉ trả về JSON thuần túy, không có markdown codeblock hay văn bản khác.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
