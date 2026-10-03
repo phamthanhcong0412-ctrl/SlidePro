@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   CreditCard,
@@ -37,13 +37,47 @@ export default function Header({
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  // Sync theme with documentElement and localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('slidepro_theme');
+      if (stored === 'light') {
+        setIsDark(false);
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        setIsDark(true);
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+      }
+    } catch {
+      setIsDark(true);
+    }
+  }, []);
+
+  const handleToggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    try {
+      if (nextDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        localStorage.setItem('slidepro_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        localStorage.setItem('slidepro_theme', 'light');
+      }
+    } catch {}
+  };
+
   return (
-    <header className="h-16 border-b border-slate-800/80 bg-[#0d1424] px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none">
+    <header className="h-16 border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0d1424] text-slate-900 dark:text-white px-3 sm:px-4 flex items-center justify-between sticky top-0 z-30 select-none transition-colors backdrop-blur-sm">
       {/* Brand & Left Toggle */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 active:bg-slate-800 transition-colors cursor-pointer"
+          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60 active:bg-slate-200 dark:active:bg-slate-800 transition-colors cursor-pointer"
           title={isSidebarOpen ? 'Thu gọn thanh bên' : 'Mở rộng thanh bên'}
           aria-label="Toggle navigation menu"
         >
@@ -58,11 +92,11 @@ export default function Header({
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div className="flex items-baseline gap-1 min-w-0">
-            <span className="font-bold text-lg sm:text-xl tracking-tight text-white font-sans truncate">
-              Slide<span className="text-cyan-400">Edu</span>
+            <span className="font-bold text-lg sm:text-xl tracking-tight text-slate-900 dark:text-white font-sans truncate">
+              Slide<span className="text-cyan-500 dark:text-cyan-400">Pro</span>
             </span>
-            <span className="hidden sm:inline-block text-[10px] uppercase font-semibold text-cyan-500/80 bg-cyan-950/80 border border-cyan-800/50 px-1.5 py-0.2 rounded shrink-0">
-              EDU AI
+            <span className="hidden sm:inline-block text-[10px] uppercase font-semibold text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/80 border border-cyan-200 dark:border-cyan-800/50 px-1.5 py-0.2 rounded shrink-0">
+              STUDIO
             </span>
           </div>
         </div>
@@ -71,39 +105,44 @@ export default function Header({
       {/* Right Controls */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Free Forever Plan Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
           <span className="font-semibold">Miễn phí</span>
-          <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+          <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-300 dark:border-emerald-500/30">
             Trọn đời
           </span>
         </div>
 
-        {/* Language Switcher - compact on mobile */}
+        {/* Language Switcher */}
         <button
           onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 min-h-[38px] rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors"
+          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 min-h-[38px] rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-colors cursor-pointer"
           title="Chuyển đổi ngôn ngữ"
         >
           <Globe className="w-3.5 h-3.5 text-slate-400" />
           <span>{lang === 'vi' ? 'VN' : 'EN'}</span>
         </button>
 
-        {/* Theme Toggle - hidden on tiny mobile, accessible in menu */}
+        {/* Theme Toggle Button (Light / Dark) */}
         <button
-          onClick={() => setIsDark(!isDark)}
-          className="hidden sm:flex p-2 min-h-[38px] min-w-[38px] items-center justify-center rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-colors"
-          title="Đổi giao diện Sáng/Tối"
+          onClick={handleToggleTheme}
+          className="flex p-2 min-h-[38px] min-w-[38px] items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+          title={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+          aria-label="Toggle theme"
         >
-          {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
+          {isDark ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-sky-600" />
+          )}
         </button>
 
         {/* User Profile Badge & Menu */}
         {user ? (
-          <div className="relative pl-1 sm:pl-2 border-l border-slate-800">
+          <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-slate-800">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-1.5 sm:gap-2 p-1 min-h-[40px] rounded-xl hover:bg-slate-800/70 transition-colors text-left"
+              className="flex items-center gap-1.5 sm:gap-2 p-1 min-h-[40px] rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors text-left cursor-pointer"
             >
               {user.picture ? (
                 <img
@@ -114,53 +153,53 @@ export default function Header({
                 />
               ) : (
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm ring-2 ring-slate-800 shrink-0">
-                  {user.avatar || 'PI'}
+                  {user.avatar || 'TC'}
                 </div>
               )}
               <div className="hidden md:block text-xs">
-                <div className="font-semibold text-slate-200 max-w-[100px] truncate">{user.name}</div>
-                <div className="text-[10px] text-emerald-400 font-medium">Gói Miễn phí trọn đời</div>
+                <div className="font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">{user.name}</div>
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Gói Miễn phí trọn đời</div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
 
             {/* Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-[#111827] border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 text-xs animate-in fade-in-50 slide-in-from-top-2 duration-150">
-                <div className="px-3.5 py-2.5 border-b border-slate-800">
-                  <div className="font-semibold text-white truncate">{user.name}</div>
-                  <div className="text-[11px] text-slate-400 truncate">{user.email}</div>
-                  <div className="text-[11px] text-emerald-400 font-bold mt-1">
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-2 z-50 text-xs animate-in fade-in-50 slide-in-from-top-2 duration-150">
+                <div className="px-3.5 py-2.5 border-b border-slate-200 dark:border-slate-800">
+                  <div className="font-semibold text-slate-900 dark:text-white truncate">{user.name}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</div>
+                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
                     Gói sử dụng: Miễn phí không giới hạn
                   </div>
                 </div>
 
-                <div className="py-1 border-b border-slate-800/60 md:hidden">
+                <div className="py-1 border-b border-slate-200 dark:border-slate-800/60 md:hidden">
                   <button
                     onClick={() => {
                       setLang(lang === 'vi' ? 'en' : 'vi');
                       setShowUserMenu(false);
                     }}
-                    className="w-full px-3.5 py-2 text-left text-slate-300 hover:bg-slate-800/60 flex items-center justify-between"
+                    className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <Globe className="w-3.5 h-3.5 text-slate-400" />
                       <span>Ngôn ngữ</span>
                     </span>
-                    <span className="text-[11px] text-cyan-400 font-semibold">{lang === 'vi' ? 'Tiếng Việt' : 'English'}</span>
+                    <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-semibold">{lang === 'vi' ? 'Tiếng Việt' : 'English'}</span>
                   </button>
                   <button
                     onClick={() => {
-                      setIsDark(!isDark);
+                      handleToggleTheme();
                       setShowUserMenu(false);
                     }}
-                    className="w-full px-3.5 py-2 text-left text-slate-300 hover:bg-slate-800/60 flex items-center justify-between"
+                    className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
-                      {isDark ? <Moon className="w-3.5 h-3.5 text-slate-400" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
+                      {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-sky-600" />}
                       <span>Giao diện</span>
                     </span>
-                    <span className="text-[11px] text-slate-400">{isDark ? 'Tối' : 'Sáng'}</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{isDark ? 'Tối' : 'Sáng'}</span>
                   </button>
                 </div>
 
@@ -169,7 +208,7 @@ export default function Header({
                     setShowUserMenu(false);
                     onLogout();
                   }}
-                  className="w-full px-3.5 py-2.5 text-left text-red-400 hover:bg-red-950/30 flex items-center gap-2 transition-colors mt-1 font-medium min-h-[44px]"
+                  className="w-full px-3.5 py-2.5 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2 transition-colors mt-1 font-medium min-h-[44px] cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Đăng xuất tài khoản</span>

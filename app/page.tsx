@@ -229,7 +229,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d18] text-slate-100 flex flex-col font-sans relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#090d18] text-slate-900 dark:text-slate-100 flex flex-col font-sans relative transition-colors duration-200">
       {/* Welcome Toast Notification */}
       {welcomeToast && (
         <div className="fixed top-20 right-5 z-50 max-w-md bg-gradient-to-r from-emerald-950 to-[#0e1f1c] border border-emerald-500/80 rounded-2xl p-4 shadow-2xl flex items-start gap-3 animate-in slide-in-from-top-4 duration-300">
