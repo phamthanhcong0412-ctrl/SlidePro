@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Package, X, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { Package, X, Sparkles, AlertCircle, Loader2, GraduationCap, Check } from 'lucide-react';
 import { LectureProject } from '@/types/presentation';
+import { LEARNER_AUDIENCES } from '@/lib/sampleData';
 
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   project: LectureProject;
+  onUpdateProject?: (updated: LectureProject) => void;
   mode: 'outline_to_script' | 'script_to_package';
 }
 
@@ -17,6 +19,7 @@ export default function ConfirmModal({
   onClose,
   onConfirm,
   project,
+  onUpdateProject,
   mode,
 }: ConfirmModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +27,15 @@ export default function ConfirmModal({
   if (!isOpen) return null;
 
   const isOutlineStep = mode === 'outline_to_script';
+
+  const handleAudienceChange = (newAudience: string) => {
+    if (onUpdateProject) {
+      onUpdateProject({
+        ...project,
+        audience: newAudience,
+      });
+    }
+  };
 
   const handleActionConfirm = () => {
     setIsSubmitting(true);
@@ -77,13 +89,56 @@ export default function ConfirmModal({
             </div>
           </div>
 
-          <div className="bg-[#0b101d] border border-slate-800/90 rounded-xl p-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Người học
-            </span>
-            <span className="text-sm font-semibold text-white">
-              {project.audience}
-            </span>
+          {/* Cấp học / Đối tượng người học - Directly editable in ConfirmModal */}
+          <div className="bg-[#0b101d] border border-cyan-900/50 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-cyan-400" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                  Đối tượng / Cấp học (Chạm để đổi):
+                </span>
+              </div>
+              <span className="text-[10px] text-cyan-300 font-medium bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-md">
+                Tùy chọn
+              </span>
+            </div>
+
+            <select
+              value={project.audience}
+              onChange={(e) => handleAudienceChange(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-cyan-300 focus:outline-none focus:border-cyan-500 cursor-pointer"
+            >
+              {LEARNER_AUDIENCES.map((aud) => (
+                <option key={aud} value={aud} className="bg-slate-900 text-white">
+                  {aud}
+                </option>
+              ))}
+            </select>
+
+            {/* Quick 3-Grade Pills for instant tapping on mobile */}
+            <div className="grid grid-cols-3 gap-1.5 pt-1">
+              {[
+                { label: 'Học sinh Tiểu học (Lớp 1 - 5)', short: '🎒 Tiểu học' },
+                { label: 'Học sinh THCS (Lớp 6 - 9)', short: '📘 THCS' },
+                { label: 'Học sinh THPT (Lớp 10 - 12)', short: '🎓 THPT' },
+              ].map((item) => {
+                const isSelected = project.audience === item.label || project.audience.includes(item.short.replace(/[^\w]/g, ''));
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleAudienceChange(item.label)}
+                    className={`py-1.5 px-1.5 rounded-lg text-[11px] font-semibold transition-all border text-center cursor-pointer ${
+                      isSelected
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold shadow-xs'
+                        : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {item.short}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

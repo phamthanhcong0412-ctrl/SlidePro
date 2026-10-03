@@ -452,57 +452,77 @@ export default function Step3ScriptQuiz({
         {activeTab === 'script' && (
           <div className="space-y-4">
             {/* AI Banner Toolbar with Grade Selector */}
-            <div className="bg-[#0f172a] border border-cyan-900/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="bg-[#0f172a] border border-cyan-900/50 rounded-xl p-3 sm:p-3.5 space-y-2.5 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2 text-slate-300">
                   <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
                     <Sparkles className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <span className="font-semibold text-white">Google Gemini AI</span>
-                    <span className="text-slate-400 ml-1.5 hidden lg:inline">
-                      — Tự động tối ưu văn phong theo cấp học:
+                    <span className="font-bold text-white text-xs sm:text-sm">Google Gemini AI</span>
+                    <span className="text-slate-400 text-xs ml-1.5 hidden md:inline">
+                      — Tự động tối ưu văn phong kịch bản theo lứa tuổi
                     </span>
                   </div>
                 </div>
 
-                {/* Grade / Audience dropdown in Step 3 */}
-                <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1">
-                  <GraduationCap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span className="text-[11px] text-slate-400 font-medium">Cấp học:</span>
-                  <select
-                    value={project.audience}
-                    onChange={(e) => onUpdateProject({ ...project, audience: e.target.value })}
-                    className="bg-transparent text-cyan-300 font-semibold text-[11px] focus:outline-none cursor-pointer"
-                  >
-                    {LEARNER_AUDIENCES.map((aud) => (
-                      <option key={aud} value={aud} className="bg-slate-900 text-white">
-                        {aud}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleRewriteAllWithAi}
+                  disabled={isRewritingAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-500/15 disabled:opacity-50 cursor-pointer"
+                  title="Google AI sẽ viết lại kịch bản cho tất cả slide theo đúng cấp học đã chọn"
+                >
+                  {isRewritingAll ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang viết lại tất cả...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>AI viết lại toàn bộ slide</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleRewriteAllWithAi}
-                disabled={isRewritingAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-semibold transition-all shadow-md shadow-cyan-500/15 disabled:opacity-50 cursor-pointer"
-                title="Google AI sẽ lần lượt viết lại kịch bản cho tất cả slide theo đúng cấp học đã chọn"
-              >
-                {isRewritingAll ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang viết lại tất cả...</span>
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-3.5 h-3.5" />
-                    <span>AI viết lại toàn bộ slide</span>
-                  </>
-                )}
-              </button>
+              {/* Dedicated Grade Selector Row */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium shrink-0">
+                  <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Cấp học:</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    { label: 'Học sinh Tiểu học (Lớp 1 - 5)', short: '🎒 Tiểu học' },
+                    { label: 'Học sinh THCS (Lớp 6 - 9)', short: '📘 THCS' },
+                    { label: 'Học sinh THPT (Lớp 10 - 12)', short: '🎓 THPT' },
+                    { label: 'Sinh viên đại học/cao đẳng', short: '🏛️ Đại học' },
+                    { label: 'Chuyên viên / Người đi làm', short: '💼 Đi làm' },
+                  ].map((item) => {
+                    const isSelected = project.audience === item.label || project.audience.includes(item.short.replace(/[^\w]/g, ''));
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => {
+                          onUpdateProject({ ...project, audience: item.label });
+                          showNotification(`Đã chuyển cấp học sang: ${item.short}`);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border cursor-pointer ${
+                          isSelected
+                            ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold shadow-xs'
+                            : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {item.short}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {project.slides.map((slide, sIdx) => {

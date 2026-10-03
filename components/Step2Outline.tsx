@@ -11,7 +11,8 @@ import {
   HelpCircle,
   Sparkles,
   ArrowRight,
-  CreditCard
+  CreditCard,
+  GraduationCap
 } from 'lucide-react';
 import {
   LectureProject,
@@ -146,17 +147,18 @@ export default function Step2Outline({
             </div>
 
             {/* Đối tượng người học */}
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 font-medium">ĐỐI TƯỢNG NGƯỜI HỌC</span>
+            <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1">
+              <GraduationCap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-slate-400 font-medium text-[11px]">CẤP HỌC:</span>
               <select
                 value={project.audience}
                 onChange={(e) =>
                   onUpdateProject({ ...project, audience: e.target.value })
                 }
-                className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none"
+                className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer text-xs"
               >
                 {LEARNER_AUDIENCES.map((a) => (
-                  <option key={a} value={a}>
+                  <option key={a} value={a} className="bg-slate-900 text-white">
                     {a}
                   </option>
                 ))}

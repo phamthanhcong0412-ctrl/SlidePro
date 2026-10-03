@@ -455,6 +455,7 @@ export default function HomePage() {
             : handleConfirmStep3
         }
         project={currentProject}
+        onUpdateProject={setCurrentProject}
         mode={confirmModalMode || 'outline_to_script'}
       />
 
