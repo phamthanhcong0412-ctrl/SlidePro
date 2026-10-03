@@ -228,11 +228,11 @@ export const LECTURE_FIELDS = [
 ];
 
 export const LEARNER_AUDIENCES = [
+  'Học sinh Tiểu học (Lớp 1 - 5)',
+  'Học sinh THCS (Lớp 6 - 9)',
+  'Học sinh THPT (Lớp 10 - 12)',
   'Sinh viên đại học/cao đẳng',
-  'Học sinh phổ thông (THPT)',
-  'Học sinh THCS & Tiểu học',
   'Chuyên viên / Người đi làm',
-  'Học viên sau đại học',
   'Đại chúng (Mọi lứa tuổi)'
 ];
 

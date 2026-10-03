@@ -38,18 +38,43 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    let audiencePedagogy = '';
+    if (/tiểu học|lớp 1|lớp 2|lớp 3|lớp 4|lớp 5|primary/i.test(audience || '')) {
+      audiencePedagogy = `* CẤP HỌC ĐẶC THÙ: TIỂU HỌC (Lớp 1 - 5, từ 6 - 11 tuổi)
+- Luận điểm trên slide phải ngắn gọn, dễ nhớ, trực quan.
+- Lời giảng xưng hô 'thầy/cô' và 'các con/các em', ngôn từ trong sáng, đáng yêu, vui tươi, ví dụ đồ vật/con vật quen thuộc.`;
+    } else if (/thcs|lớp 6|lớp 7|lớp 8|lớp 9|cấp 2/i.test(audience || '')) {
+      audiencePedagogy = `* CẤP HỌC ĐẶC THÙ: TRUNG HỌC CƠ SỞ (THCS, Lớp 6 - 9)
+- Luận điểm logic nguyên nhân - kết quả rõ ràng.
+- Lời giảng xưng hô 'thầy/cô' và 'các em', giọng văn hào hứng, khơi gợi trí tò mò khoa học.`;
+    } else if (/thpt|lớp 10|lớp 11|lớp 12|cấp 3/i.test(audience || '')) {
+      audiencePedagogy = `* CẤP HỌC ĐẶC THÙ: TRUNG HỌC PHỔ THÔNG (THPT, Lớp 10 - 12)
+- Luận điểm khoa học chuẩn mực, rèn tư duy logic phản biện và gắn với ôn luyện thi cử.
+- Lời giảng xưng hô 'thầy/cô' và 'các em', chuẩn mực sư phạm, sâu sắc.`;
+    } else {
+      audiencePedagogy = `* ĐỐI TƯỢNG: ${audience || 'Sinh viên đại học/cao đẳng'}: Học thuật chuyên sâu, phân tích đa chiều.`;
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
     const prompt = `Bạn là chuyên gia sư phạm và thiết kế bài giảng E-Learning, PowerPoint chuyên nghiệp hàng đầu tại Việt Nam.
 Hãy phân tích tệp tài liệu PDF bài giảng sau đây:
 Tiêu đề: ${title}
 Lĩnh vực: ${field || 'Khoa học & Đào tạo'}
 Đối tượng người học: ${audience || 'Sinh viên đại học/cao đẳng'}
+${audiencePedagogy}
 Dữ liệu trích xuất từ tài liệu:
 ${JSON.stringify(textSnippets)}
 
 Yêu cầu xuất ra JSON chuẩn với cấu trúc sau:
 {
-  "overview": "Đoạn văn 2-3 câu tóm tắt tổng quan bài giảng một cách súc tích, học thuật, hấp dẫn",
+  "overview": "Đoạn văn 2-3 câu tóm tắt tổng quan bài giảng một cách phù hợp với cấp học đã chọn",
   "units": [
     {
       "title": "Tên đơn vị kiến thức",
@@ -65,7 +90,7 @@ Yêu cầu xuất ra JSON chuẩn với cấu trúc sau:
       "pageNumber": 1,
       "title": "Tiêu đề ngắn gọn, đắt giá cho slide",
       "points": ["Luận điểm 1 rõ ràng", "Luận điểm 2 có dẫn chứng", "Luận điểm 3 cốt lõi", "Luận điểm 4 kết luận"],
-      "script": "Lời giảng chi tiết (120-180 từ) phong cách tự nhiên, truyền cảm như một giảng viên đại học xuất sắc đang thuyết trình trước lớp. Dùng từ ngữ sư phạm chuẩn xác tiếng Việt.",
+      "script": "Lời giảng chi tiết (120-180 từ) phong cách tự nhiên, đúng chuẩn xưng hô và tâm lý của cấp học đã chọn. Dùng từ ngữ sư phạm chuẩn xác tiếng Việt.",
       "duration": 58,
       "wordCount": 160
     }

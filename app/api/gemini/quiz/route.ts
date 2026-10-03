@@ -40,11 +40,32 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    let quizPedagogy = '';
+    if (/tiểu học|lớp 1|lớp 2|lớp 3|lớp 4|lớp 5|primary/i.test(audience || '')) {
+      quizPedagogy = `* CẤP HỌC: TIỂU HỌC (Lớp 1 - 5, từ 6 - 11 tuổi)
+- Câu hỏi ngắn gọn, câu từ trong sáng, dễ hiểu, gắn với các chi tiết trực quan.
+- Các phương án trả lời đơn giản, dễ đọc, không gài bẫy phức tạp, tạo hứng thú cho các con.`;
+    } else if (/thcs|lớp 6|lớp 7|lớp 8|lớp 9|cấp 2/i.test(audience || '')) {
+      quizPedagogy = `* CẤP HỌC: TRUNG HỌC CƠ SỞ (THCS, Lớp 6 - 9)
+- Câu hỏi kiểm tra khả năng hiểu bản chất, nhận biết và vận dụng kiến thức cơ bản.`;
+    } else if (/thpt|lớp 10|lớp 11|lớp 12|cấp 3/i.test(audience || '')) {
+      quizPedagogy = `* CẤP HỌC: TRUNG HỌC PHỔ THÔNG (THPT, Lớp 10 - 12)
+- Câu hỏi theo định dạng trắc nghiệm thi tốt nghiệp THPT, phân loại từ mức độ hiểu đến vận dụng cao.`;
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
     const prompt = `Bạn là chuyên gia khảo thí và soạn thảo ngân hàng đề thi trắc nghiệm sư phạm.
 Hãy tạo ${count || 3} câu hỏi trắc nghiệm 4 lựa chọn (A, B, C, D) dựa trên nội dung bài giảng sau:
 Chủ đề: ${title}
 Đối tượng: ${audience || 'Sinh viên đại học'}
+${quizPedagogy}
 Nội dung slide & bài giảng:
 ${JSON.stringify(slides)}
 

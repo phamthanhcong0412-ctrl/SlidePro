@@ -13,9 +13,11 @@ import {
   FileSpreadsheet,
   Loader2,
   CheckCircle2,
-  Cpu
+  Cpu,
+  GraduationCap,
+  Check
 } from 'lucide-react';
-import { SAMPLE_PROJECTS } from '@/lib/sampleData';
+import { SAMPLE_PROJECTS, LEARNER_AUDIENCES } from '@/lib/sampleData';
 import { LectureProject } from '@/types/presentation';
 import { parsePdfFile } from '@/lib/pdfUtils';
 
@@ -33,6 +35,9 @@ export default function Step1Upload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAudience, setSelectedAudience] = useState<string>(
+    currentProject?.audience || 'Học sinh THCS (Lớp 6 - 9)'
+  );
   const [showHowToConvert, setShowHowToConvert] = useState(false);
 
   // Processing state when user clicks "Bắt đầu xử lý"
@@ -98,7 +103,7 @@ export default function Step1Upload({
         fileSize: calculatedSize,
         totalPages: totalSlidesCount,
         field: detectedField,
-        audience: 'Sinh viên đại học/cao đẳng',
+        audience: selectedAudience,
         overview: `Bài giảng trích xuất từ tài liệu "${file.name}", bao gồm ${totalSlidesCount} trang slide với các nội dung cốt lõi và hướng dẫn chi tiết theo chuẩn sư phạm hiện đại.`,
         voice: 'Nữ trẻ',
         voiceSpeed: 1,
@@ -185,6 +190,7 @@ export default function Step1Upload({
     const newInstance: LectureProject = {
       ...sample,
       id: `proj-${Date.now()}`,
+      audience: selectedAudience,
       createdAt: new Date().toISOString().split('T')[0],
     };
     onFileLoaded(newInstance);
@@ -193,6 +199,12 @@ export default function Step1Upload({
   // Trigger processing and load Step 2 when user clicks "Bắt đầu xử lý"
   const handleStartProcessing = () => {
     if (!currentProject || isProcessing) return;
+    
+    // Ensure current project has latest selected audience
+    if (currentProject.audience !== selectedAudience) {
+      onFileLoaded({ ...currentProject, audience: selectedAudience });
+    }
+
     setIsProcessing(true);
     setProcessProgress(20);
     setProcessStage('Đang đọc cấu trúc các trang slide từ tệp PDF...');
@@ -292,6 +304,66 @@ export default function Step1Upload({
             <span className="px-2.5 py-1 rounded-md bg-slate-800/90 text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-700/60">
               1 slide = 1 trang
             </span>
+          </div>
+        </div>
+
+        {/* Grade / Audience Selector Card */}
+        <div className="bg-[#0d1527] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <GraduationCap className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+                Chọn cấp học để AI tối ưu nội dung & văn phong:
+              </span>
+            </div>
+            <span className="text-[11px] text-cyan-400 font-medium">
+              Đang chọn: <strong className="text-white">{selectedAudience.split('(')[0].trim()}</strong>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+            {[
+              { label: 'Học sinh Tiểu học (Lớp 1 - 5)', short: 'Tiểu học', age: 'Lớp 1 - 5', desc: 'Ấm áp, trong sáng, dễ hiểu, câu ngắn', badgeBg: 'from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40' },
+              { label: 'Học sinh THCS (Lớp 6 - 9)', short: 'THCS', age: 'Lớp 6 - 9', desc: 'Hào hứng, tò mò, khám phá khoa học', badgeBg: 'from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/40' },
+              { label: 'Học sinh THPT (Lớp 10 - 12)', short: 'THPT', age: 'Lớp 10 - 12', desc: 'Chuẩn mực, logic, luyện thi & tư duy', badgeBg: 'from-purple-500/20 to-indigo-500/20 text-purple-300 border-purple-500/40' },
+              { label: 'Sinh viên đại học/cao đẳng', short: 'Đại học / CĐ', age: '18+ tuổi', desc: 'Học thuật, chuyên sâu, phân tích', badgeBg: 'from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/40' },
+              { label: 'Chuyên viên / Người đi làm', short: 'Người đi làm', age: 'Doanh nghiệp', desc: 'Thực chiến, súc tích, giải quyết việc', badgeBg: 'from-rose-500/20 to-pink-500/20 text-rose-300 border-rose-500/40' },
+              { label: 'Đại chúng (Mọi lứa tuổi)', short: 'Mọi lứa tuổi', age: 'Phổ thông', desc: 'Dễ tiếp cận, truyền cảm hứng', badgeBg: 'from-slate-500/20 to-zinc-500/20 text-slate-300 border-slate-500/40' },
+            ].map((item) => {
+              const isSelected = selectedAudience === item.label;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAudience(item.label);
+                    if (currentProject) {
+                      onFileLoaded({ ...currentProject, audience: item.label });
+                    }
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
+                    isSelected
+                      ? `bg-gradient-to-r ${item.badgeBg} ring-2 ring-cyan-400 shadow-sm shadow-cyan-500/20 scale-[1.01]`
+                      : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                        {item.short}
+                      </span>
+                      <span className="text-[10px] text-slate-400">({item.age})</span>
+                    </div>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />}
+                  </div>
+                  <span className="text-[10.5px] text-slate-400 mt-1 line-clamp-1">
+                    {item.desc}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

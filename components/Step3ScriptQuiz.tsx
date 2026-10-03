@@ -18,10 +18,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Loader2,
-  Wand2
+  Wand2,
+  GraduationCap
 } from 'lucide-react';
 import { LectureProject, Slide, QuizQuestion } from '@/types/presentation';
-import { VOICE_OPTIONS } from '@/lib/sampleData';
+import { VOICE_OPTIONS, LEARNER_AUDIENCES } from '@/lib/sampleData';
 import { exportToPowerPoint } from '@/lib/exportPptx';
 
 interface Step3ScriptQuizProps {
@@ -450,17 +451,36 @@ export default function Step3ScriptQuiz({
         {/* TAB 1: LỜI GIẢNG CARDS */}
         {activeTab === 'script' && (
           <div className="space-y-4">
-            {/* AI Banner Toolbar */}
+            {/* AI Banner Toolbar with Grade Selector */}
             <div className="bg-[#0f172a] border border-cyan-900/40 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-              <div className="flex items-center gap-2 text-slate-300">
-                <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-3.5 h-3.5" />
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-white">Google Gemini AI</span>
+                    <span className="text-slate-400 ml-1.5 hidden lg:inline">
+                      — Tự động tối ưu văn phong theo cấp học:
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold text-white">Google Gemini AI</span>
-                  <span className="text-slate-400 ml-1.5 hidden sm:inline">
-                    — Tự động viết lại kịch bản thuyết trình tự nhiên, phong cách giảng dạy truyền cảm.
-                  </span>
+
+                {/* Grade / Audience dropdown in Step 3 */}
+                <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span className="text-[11px] text-slate-400 font-medium">Cấp học:</span>
+                  <select
+                    value={project.audience}
+                    onChange={(e) => onUpdateProject({ ...project, audience: e.target.value })}
+                    className="bg-transparent text-cyan-300 font-semibold text-[11px] focus:outline-none cursor-pointer"
+                  >
+                    {LEARNER_AUDIENCES.map((aud) => (
+                      <option key={aud} value={aud} className="bg-slate-900 text-white">
+                        {aud}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -469,7 +489,7 @@ export default function Step3ScriptQuiz({
                 onClick={handleRewriteAllWithAi}
                 disabled={isRewritingAll}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-semibold transition-all shadow-md shadow-cyan-500/15 disabled:opacity-50 cursor-pointer"
-                title="Google AI sẽ lần lượt viết lại kịch bản cho tất cả slide"
+                title="Google AI sẽ lần lượt viết lại kịch bản cho tất cả slide theo đúng cấp học đã chọn"
               >
                 {isRewritingAll ? (
                   <>
@@ -758,15 +778,33 @@ export default function Step3ScriptQuiz({
       {editingSlideId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
           <div className="w-full max-w-lg bg-[#131b2e] border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+              <div>
+                <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                  <GraduationCap className="w-3 h-3 text-cyan-400" />
+                  <span>Cấp học:</span>
+                  <select
+                    value={project.audience}
+                    onChange={(e) => onUpdateProject({ ...project, audience: e.target.value })}
+                    className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer"
+                  >
+                    {LEARNER_AUDIENCES.map((aud) => (
+                      <option key={aud} value={aud} className="bg-slate-900 text-white">
+                        {aud}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleModalAiRewrite('pedagogical')}
                   disabled={isModalRewriting}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-700/60 text-cyan-300 hover:bg-cyan-900/60 text-[11px] font-medium transition-colors disabled:opacity-50 cursor-pointer"
-                  title="Google Gemini viết lại theo chuẩn phong cách sư phạm"
+                  title="Google Gemini viết lại theo chuẩn phong cách sư phạm của cấp học đã chọn"
                 >
                   {isModalRewriting ? (
                     <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
