@@ -256,7 +256,7 @@ export async function exportProjectToPptx(project: LectureProject): Promise<void
 
     // Embed Speaker Notes directly into PowerPoint
     slide.addNotes(
-      `[LỜI GIẢNG BÀI - THỜI LƯỢNG ƯỚC TÍNH: ~${slideData.duration || 60} GIÂY (${slideData.wordCount || 100} TỪ)]\n\n${slideData.script || ''}`
+      `[SLIDE SỐ ${slideData.pageNumber || idx + 1}]\n\n- Nội dung tóm tắt gốc (giữ nguyên):\n${slideData.originalSummary || (slideData.points || []).join('\n')}\n\n- Kịch bản giọng đọc (~${slideData.duration || 60} giây / ${slideData.wordCount || 100} từ):\n${slideData.script || ''}`
     );
   });
 
@@ -266,16 +266,19 @@ export async function exportProjectToPptx(project: LectureProject): Promise<void
       const qSlide = pptx.addSlide();
       qSlide.background = { color: COLOR_BG_DARK };
 
-      qSlide.addText(`CÂU HỎI CỦNG CỐ KIẾN THỨC #${qIdx + 1}`, {
-        x: 1.0,
-        y: 0.55,
-        w: 10.0,
-        h: 0.4,
-        fontSize: 12,
-        fontFace: FONT_TITLE,
-        color: COLOR_ACCENT_ORANGE,
-        bold: true,
-      });
+      qSlide.addText(
+        `CÂU HỎI QUIZ ÔN TẬP #${qIdx + 1}${q.slideNumber ? ` • [SLIDE SỐ ${q.slideNumber}]` : ''}`,
+        {
+          x: 1.0,
+          y: 0.55,
+          w: 10.0,
+          h: 0.4,
+          fontSize: 12,
+          fontFace: FONT_TITLE,
+          color: COLOR_ACCENT_ORANGE,
+          bold: true,
+        }
+      );
 
       const qLen = (q.question || '').length;
       const qSize = qLen > 80 ? 18 : 21;

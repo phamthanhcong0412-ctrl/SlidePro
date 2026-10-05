@@ -157,41 +157,14 @@ export default function HomePage() {
   const handleConfirmStep2 = () => {
     setConfirmModalMode(null);
 
-    // Calculate total desired questions from all knowledge units
-    const totalQuestionsDesired = currentProject.units.reduce(
-      (sum, u) => sum + (Number(u.questionCount) || 0),
-      0
-    ) || currentProject.quizzes.length;
-
-    // Synchronize quizzes to match requested count exactly
-    if (totalQuestionsDesired > 0 && currentProject.quizzes.length !== totalQuestionsDesired) {
-      let updatedQuizzes = [...currentProject.quizzes];
-      if (updatedQuizzes.length < totalQuestionsDesired) {
-        const diff = totalQuestionsDesired - updatedQuizzes.length;
-        const newQuizzes = Array.from({ length: diff }).map((_, i) => {
-          const slideRef = currentProject.slides[i % currentProject.slides.length];
-          const slideTitle = slideRef?.title || `Nội dung slide ${i + 1}`;
-          return {
-            id: `q-${Date.now()}-${updatedQuizzes.length + i + 1}`,
-            question: `Câu hỏi ôn tập ${updatedQuizzes.length + i + 1}: Trọng tâm của phần "${slideTitle}" trong bài học là gì?`,
-            options: [
-              'Nắm vững bản chất nguyên lý và ứng dụng thực hành chính xác',
-              'Bỏ qua các bước phân tích lý thuyết ban đầu',
-              'Chỉ ghi nhớ máy móc mà không cần vận dụng',
-              'Không cần tuân thủ quy trình chuẩn'
-            ],
-            correctIndex: 0,
-            explanation: `Theo nội dung bài giảng tại slide ${slideRef?.pageNumber || 1}, việc hiểu sâu lý thuyết gắn liền với thực hành là yêu cầu bắt buộc.`
-          };
-        });
-        updatedQuizzes = [...updatedQuizzes, ...newQuizzes];
-      } else {
-        updatedQuizzes = updatedQuizzes.slice(0, totalQuestionsDesired);
-      }
-
+    // Đồng bộ danh sách câu hỏi từ các slide gốc (tuyệt đối không chèn câu hỏi giả ngoài slide)
+    const slideLevelQuizzes = currentProject.slides.flatMap(
+      (s) => s.quizzes || []
+    );
+    if (slideLevelQuizzes.length > 0 && currentProject.quizzes.length === 0) {
       setCurrentProject((prev) => ({
         ...prev,
-        quizzes: updatedQuizzes,
+        quizzes: slideLevelQuizzes,
       }));
     }
 

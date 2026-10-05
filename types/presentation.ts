@@ -9,12 +9,24 @@ export interface UserProfile {
   createdAt: string;
 }
 
+export interface QuizQuestion {
+  id: string;
+  slideNumber?: number; // Liên kết trực tiếp với [Slide số X]
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
 export interface Slide {
   id: string;
   pageNumber: number;
   title: string;
-  points: string[];
-  script: string; // Lời giảng bài do AI soạn
+  originalText?: string; // Toàn bộ văn bản gốc trích xuất từ trang PDF
+  originalSummary?: string; // Nội dung tóm tắt gốc (giữ nguyên 100% thông tin, số liệu từ slide gốc)
+  points: string[]; // Các ý cốt lõi giữ nguyên từ slide gốc
+  script: string; // Kịch bản giọng đọc (Voiceover Script) do AI biên soạn bám sát gốc
+  quizzes?: QuizQuestion[]; // Câu hỏi Quiz ôn tập dựa hoàn toàn trên kiến thức trong slide này
   duration: number; // Thời lượng ước tính (giây)
   wordCount: number;
   thumbnailUrl?: string;
@@ -29,14 +41,6 @@ export interface KnowledgeUnit {
   endSlide: number;
   mainContent: string;
   questionCount: number;
-}
-
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
 }
 
 export interface LectureProject {
