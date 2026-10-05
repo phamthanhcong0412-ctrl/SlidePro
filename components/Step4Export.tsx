@@ -75,6 +75,7 @@ export default function Step4Export({
 
   const handleDownloadScorm = () => {
     setIsExportingScorm(true);
+    // Package HTML5 & SCORM simulation manifest
     const scormHtml = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -82,45 +83,24 @@ export default function Step4Export({
   <title>${project.title} - SCORM E-Learning</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; background: #0b101b; color: #f8fafc; padding: 30px; line-height: 1.6; }
-    .card { background: #131b2e; border: 1px solid #1e293b; max-width: 820px; margin: 0 auto; padding: 28px; border-radius: 16px; text-align: left; }
-    h1 { color: #38bdf8; font-size: 22px; margin-bottom: 8px; }
-    .slide-box { background: #0d1424; border: 1px solid #1e293b; padding: 16px; border-radius: 12px; margin-bottom: 16px; }
-    .label { color: #34d399; font-weight: bold; display: block; margin-top: 8px; }
+    body { font-family: sans-serif; background: #0b101b; color: #f8fafc; padding: 30px; text-align: center; }
+    .card { background: #131b2e; border: 1px solid #1e293b; max-width: 700px; margin: 0 auto; padding: 25px; border-radius: 16px; text-align: left; }
+    h1 { color: #38bdf8; font-size: 22px; }
     .btn { background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>${project.title}</h1>
-    <p><strong>Lĩnh vực:</strong> ${project.field} • <strong>Đối tượng:</strong> ${project.audience}</p>
+    <p><strong>Lĩnh vực:</strong> ${project.field}</p>
+    <p><strong>Đối tượng:</strong> ${project.audience}</p>
     <p>${project.overview}</p>
     <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-    <h3>Nội dung chi tiết theo từng Slide (${project.slides.length} slide)</h3>
-    ${project.slides
-      .map((s) => {
-        const slideQuizzes = (project.quizzes || []).filter((q) => q.slideNumber === s.pageNumber);
-        return `<div class="slide-box">
-          <h4>[Slide số ${s.pageNumber}] - ${s.title}</h4>
-          <span class="label">- Nội dung tóm tắt gốc (giữ nguyên):</span>
-          <div style="white-space: pre-line;">${s.originalSummary || s.points.join('\n')}</div>
-          <span class="label" style="color:#38bdf8;">- Kịch bản giọng đọc:</span>
-          <div>${s.script}</div>
-          <span class="label" style="color:#fbbf24;">- Câu hỏi Quiz ôn tập:</span>
-          <div>${
-            slideQuizzes.length > 0
-              ? slideQuizzes
-                  .map(
-                    (q, idx) =>
-                      `<div><strong>Câu ${idx + 1}:</strong> ${q.question}<br/>Đáp án đúng: ${String.fromCharCode(65 + q.correctIndex)} (${q.options[q.correctIndex] || ''})<br/><em>Giải thích:</em> ${q.explanation}</div>`
-                  )
-                  .join('<br/>')
-              : 'Đã tích hợp trong bộ đề ôn tập.'
-          }</div>
-        </div>`;
-      })
-      .join('')}
-    <button class="btn" onclick="this.textContent='Đã ghi nhận hoàn thành khóa học SCORM 1.2/2004!'">Hoàn thành bài giảng</button>
+    <h3>Danh sách Slide (${project.slides.length} slide)</h3>
+    <ul>
+      ${project.slides.map(s => `<li><strong>Slide ${s.pageNumber}:</strong> ${s.title}<br><em>Lời giảng:</em> ${s.script}</li>`).join('')}
+    </ul>
+    <button class="btn" onclick="alert('Đã ghi nhận hoàn thành khóa học SCORM 1.2/2004!')">Hoàn thành bài giảng</button>
   </div>
 </body>
 </html>`;

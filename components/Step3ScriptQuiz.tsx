@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Volume2,
+  VolumeX,
   Play,
   Pause,
   Edit3,
@@ -10,27 +11,19 @@ import {
   HelpCircle,
   Plus,
   Trash2,
+  Package,
   Eye,
   Download,
+  RotateCw,
   ArrowRight,
   CheckCircle2,
   Loader2,
   Wand2,
-  GraduationCap,
-  FileText,
-  Copy,
-  Check,
-  ShieldCheck,
-  Layers,
+  GraduationCap
 } from 'lucide-react';
 import { LectureProject, Slide, QuizQuestion } from '@/types/presentation';
-import { LEARNER_AUDIENCES } from '@/lib/sampleData';
-import {
-  playLectureAudio,
-  stopAnyPlayingAudio,
-  getVoiceProfile,
-  VOICE_PROFILES,
-} from '@/lib/ttsService';
+import { VOICE_OPTIONS, LEARNER_AUDIENCES } from '@/lib/sampleData';
+import { playLectureAudio, stopAnyPlayingAudio, isAudioPlaying, getVoiceProfile, VOICE_PROFILES } from '@/lib/ttsService';
 import { exportToPowerPoint } from '@/lib/exportPptx';
 
 interface Step3ScriptQuizProps {
@@ -48,22 +41,13 @@ export default function Step3ScriptQuiz({
   onBack,
   onOpenPreview,
 }: Step3ScriptQuizProps) {
-  const [activeTab, setActiveTab] = useState<
-    'per_slide' | 'script' | 'quiz' | 'formatted'
-  >('per_slide');
-  const [selectedVoice, setSelectedVoice] = useState(
-    project.voice || 'Nữ - Giọng Bắc (Hà Nội)'
-  );
+  const [activeTab, setActiveTab] = useState<'script' | 'quiz'>('script');
+  const [selectedVoice, setSelectedVoice] = useState(project.voice || 'Nữ - Giọng Bắc (Hà Nội)');
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
   const [editedScriptText, setEditedScriptText] = useState('');
-  const [editedOriginalSummary, setEditedOriginalSummary] = useState('');
   const [isPlayingAudio, setIsPlayingAudio] = useState<string | null>(null);
   const [isGeneratingAiQuiz, setIsGeneratingAiQuiz] = useState(false);
-  const [generatingQuizSlideNum, setGeneratingQuizSlideNum] = useState<
-    number | null
-  >(null);
   const [isExportingPptx, setIsExportingPptx] = useState(false);
-  const [copiedFormatted, setCopiedFormatted] = useState(false);
 
   // Real Google AI Rewrite States
   const [rewritingSlideId, setRewritingSlideId] = useState<string | null>(null);
@@ -84,84 +68,6 @@ export default function Step3ScriptQuiz({
       stopAnyPlayingAudio();
     };
   }, []);
-
-  // Helper to get quizzes belonging to a specific slide pageNumber
-  const getQuizzesForSlide = (slide: Slide, slideIndex: number): QuizQuestion[] => {
-    const pageNum = slide.pageNumber || slideIndex + 1;
-    const matched = project.quizzes.filter((q) => q.slideNumber === pageNum);
-    if (matched.length > 0) return matched;
-    if (Array.isArray(slide.quizzes) && slide.quizzes.length > 0) {
-      return slide.quizzes;
-    }
-    // If legacy quizzes have no slideNumber, map by index
-    const legacyWithoutSlideNum = project.quizzes.filter(
-      (q) => typeof q.slideNumber !== 'number'
-    );
-    if (legacyWithoutSlideNum[slideIndex]) {
-      return [
-        {
-          ...legacyWithoutSlideNum[slideIndex],
-          slideNumber: pageNum,
-        },
-      ];
-    }
-    return [];
-  };
-
-  // Build formatted standard output string matching user's exact specification
-  const buildStandardFormattedText = (): string => {
-    return project.slides
-      .map((slide, idx) => {
-        const pageNum = slide.pageNumber || idx + 1;
-        const originalContent =
-          slide.originalSummary ||
-          (Array.isArray(slide.points) && slide.points.length > 0
-            ? slide.points.map((p) => `  • ${p}`).join('\n')
-            : slide.title);
-        const slideQuizzes = getQuizzesForSlide(slide, idx);
-
-        const quizBlock =
-          slideQuizzes.length > 0
-            ? slideQuizzes
-                .map((q, qIdx) => {
-                  const opts = (q.options || [])
-                    .map(
-                      (opt, oIdx) =>
-                        `    ${String.fromCharCode(65 + oIdx)}. ${opt}`
-                    )
-                    .join('\n');
-                  const correctLetter = String.fromCharCode(
-                    65 + (q.correctIndex || 0)
-                  );
-                  const correctText = q.options?.[q.correctIndex || 0] || '';
-                  return `  Câu ${qIdx + 1}: ${q.question}\n${opts}\n    -> Đáp án đúng: ${correctLetter} (${correctText})\n    -> Giải thích: ${q.explanation}`;
-                })
-                .join('\n\n')
-            : '  (Chưa có câu hỏi cho slide này)';
-
-        return `[Slide số ${pageNum}] - ${slide.title}
-- Nội dung tóm tắt gốc (giữ nguyên):
-${originalContent}
-
-- Kịch bản giọng đọc:
-${slide.script}
-
-- Câu hỏi Quiz ôn tập:
-${quizBlock}`;
-      })
-      .join('\n\n--------------------------------------------------\n\n');
-  };
-
-  const handleCopyStandardOutput = async () => {
-    try {
-      await navigator.clipboard.writeText(buildStandardFormattedText());
-      setCopiedFormatted(true);
-      showNotification('Đã sao chép toàn bộ nội dung chuẩn theo từng Slide!');
-      setTimeout(() => setCopiedFormatted(false), 3000);
-    } catch {
-      showNotification('Không thể sao chép tự động, vui lòng bôi đen văn bản.');
-    }
-  };
 
   const handleSpeech = (text: string, slideId: string) => {
     if (isPlayingAudio === slideId) {
@@ -184,28 +90,16 @@ ${quizBlock}`;
   const handleOpenEditModal = (slide: Slide) => {
     setEditingSlideId(slide.id);
     setEditedScriptText(slide.script);
-    setEditedOriginalSummary(
-      slide.originalSummary || slide.points.join('\n') || ''
-    );
   };
 
   const handleSaveScript = (slideId: string) => {
-    const wordCount = editedScriptText
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean).length;
-    const duration = Math.max(20, Math.round((wordCount / 140) * 60));
-    const updatedPoints = editedOriginalSummary
-      .split('\n')
-      .map((l) => l.replace(/^[•\-*]\s*/, '').trim())
-      .filter(Boolean);
+    const wordCount = editedScriptText.trim().split(/\s+/).filter(Boolean).length;
+    const duration = Math.round((wordCount / 140) * 60);
 
     const updatedSlides = project.slides.map((s) =>
       s.id === slideId
         ? {
             ...s,
-            originalSummary: editedOriginalSummary,
-            points: updatedPoints.length > 0 ? updatedPoints : s.points,
             script: editedScriptText,
             wordCount,
             duration,
@@ -218,14 +112,10 @@ ${quizBlock}`;
       slides: updatedSlides,
     });
     setEditingSlideId(null);
-    showNotification('Đã lưu cập nhật cho slide!');
   };
 
-  // Real Google Gemini AI Rewrite for a single slide (strictly preserving original content)
-  const handleAiPolishScript = async (
-    slideId: string,
-    style: string = 'pedagogical'
-  ) => {
+  // Real Google Gemini AI Rewrite for a single slide
+  const handleAiPolishScript = async (slideId: string, style: string = 'pedagogical') => {
     const slide = project.slides.find((s) => s.id === slideId);
     if (!slide || rewritingSlideId) return;
 
@@ -235,10 +125,7 @@ ${quizBlock}`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          slideNumber: slide.pageNumber,
           slideTitle: slide.title,
-          originalSummary: slide.originalSummary,
-          originalText: slide.originalText,
           bulletPoints: slide.points,
           currentScript: slide.script,
           style,
@@ -254,11 +141,8 @@ ${quizBlock}`;
             ? {
                 ...s,
                 script: data.script,
-                wordCount:
-                  data.wordCount ||
-                  data.script.trim().split(/\s+/).filter(Boolean).length,
-                duration:
-                  data.duration || Math.round((data.wordCount / 140) * 60),
+                wordCount: data.wordCount || data.script.trim().split(/\s+/).filter(Boolean).length,
+                duration: data.duration || Math.round((data.wordCount / 140) * 60),
               }
             : s
         );
@@ -267,9 +151,7 @@ ${quizBlock}`;
           ...project,
           slides: updatedSlides,
         });
-        showNotification(
-          `✨ Đã viết lại Kịch bản giọng đọc cho [Slide số ${slide.pageNumber}] (Giữ nguyên 100% ý gốc)!`
-        );
+        showNotification('✨ Google Gemini AI đã viết lại lời giảng truyền cảm!');
       }
     } catch (err) {
       console.error('Gemini rewrite error:', err);
@@ -279,98 +161,48 @@ ${quizBlock}`;
     }
   };
 
-  // Re-analyze all slides strictly (originalSummary + script + per-slide quiz)
+  // Batch rewrite all slides with Google Gemini
   const handleRewriteAllWithAi = async () => {
     if (isRewritingAll || project.slides.length === 0) return;
     setIsRewritingAll(true);
-    showNotification(
-      '✨ AI đang xử lý lại toàn bộ Slide theo quy tắc sao chép nghiêm ngặt 100%...'
-    );
+    showNotification('✨ Google AI đang viết lại kịch bản cho toàn bộ slide...');
 
     try {
-      const BATCH_SIZE = 5;
-      const totalSlides = project.slides.length;
-      const totalBatches = Math.ceil(totalSlides / BATCH_SIZE);
-      const updatedSlidesMap = new Map<number, Slide>();
-
-      for (let b = 0; b < totalBatches; b++) {
-        const startIdx = b * BATCH_SIZE;
-        const batchSlides = project.slides.slice(
-          startIdx,
-          startIdx + BATCH_SIZE
-        );
-
-        const res = await fetch('/api/gemini/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: project.title,
-            field: project.field,
-            audience: project.audience,
-            slidesInput: batchSlides.map((s) => ({
-              pageNumber: s.pageNumber,
-              text: s.originalText || s.originalSummary || s.points.join('\n'),
-              thumbnailUrl: s.thumbnailUrl,
-            })),
-          }),
-        });
-
-        if (res.ok) {
+      const updatedSlides = [...project.slides];
+      for (let i = 0; i < updatedSlides.length; i++) {
+        const slide = updatedSlides[i];
+        try {
+          const res = await fetch('/api/gemini/rewrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              slideTitle: slide.title,
+              bulletPoints: slide.points,
+              currentScript: slide.script,
+              style: 'pedagogical',
+              audience: project.audience,
+              field: project.field,
+            }),
+          });
           const data = await res.json();
-          if (Array.isArray(data.slides)) {
-            data.slides.forEach((aiSlide: any, idx: number) => {
-              const origSlide =
-                batchSlides[idx] ||
-                batchSlides.find((bs) => bs.pageNumber === aiSlide.pageNumber);
-              if (!origSlide) return;
-
-              const pNum = origSlide.pageNumber;
-              const slideQuizzes: QuizQuestion[] = Array.isArray(
-                aiSlide.quizzes
-              )
-                ? aiSlide.quizzes.map((q: any, qIdx: number) => ({
-                    id: q.id || `q-s${pNum}-${qIdx + 1}-${Date.now()}`,
-                    slideNumber: pNum,
-                    question: q.question,
-                    options: Array.isArray(q.options) ? q.options : [],
-                    correctIndex:
-                      typeof q.correctIndex === 'number' ? q.correctIndex : 0,
-                    explanation: q.explanation || '',
-                  }))
-                : origSlide.quizzes || [];
-
-              updatedSlidesMap.set(pNum, {
-                ...origSlide,
-                title: aiSlide.title || origSlide.title,
-                originalSummary:
-                  aiSlide.originalSummary || origSlide.originalSummary,
-                points:
-                  Array.isArray(aiSlide.points) && aiSlide.points.length > 0
-                    ? aiSlide.points
-                    : origSlide.points,
-                script: aiSlide.script || origSlide.script,
-                quizzes: slideQuizzes,
-                duration: aiSlide.duration || origSlide.duration,
-                wordCount: aiSlide.wordCount || origSlide.wordCount,
-              });
-            });
+          if (data.script) {
+            updatedSlides[i] = {
+              ...slide,
+              script: data.script,
+              wordCount: data.wordCount,
+              duration: data.duration,
+            };
           }
+        } catch (e) {
+          console.error(`Error on slide ${i}:`, e);
         }
       }
 
-      const finalSlides = project.slides.map(
-        (s) => updatedSlidesMap.get(s.pageNumber) || s
-      );
-      const allQuizzes = finalSlides.flatMap((s) => s.quizzes || []);
-
       onUpdateProject({
         ...project,
-        slides: finalSlides,
-        quizzes: allQuizzes.length > 0 ? allQuizzes : project.quizzes,
+        slides: updatedSlides,
       });
-      showNotification(
-        '🎉 Đã hoàn tất chuẩn hóa Nội dung gốc, Kịch bản giọng đọc và Quiz cho toàn bộ Slide!'
-      );
+      showNotification('🎉 Đã hoàn tất dùng Google AI viết lại toàn bộ slide!');
     } catch (err) {
       console.error('Batch rewrite error:', err);
     } finally {
@@ -390,10 +222,7 @@ ${quizBlock}`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          slideNumber: slide.pageNumber,
           slideTitle: slide.title,
-          originalSummary: editedOriginalSummary || slide.originalSummary,
-          originalText: slide.originalText,
           bulletPoints: slide.points,
           currentScript: editedScriptText || slide.script,
           style,
@@ -405,9 +234,7 @@ ${quizBlock}`;
       const data = await res.json();
       if (data.script) {
         setEditedScriptText(data.script);
-        showNotification(
-          '✨ AI đã viết lại Kịch bản giọng đọc bám sát 100% nội dung gốc!'
-        );
+        showNotification('✨ Google AI đã viết lại lời giảng mới trong ô soạn thảo!');
       }
     } catch (err) {
       console.error('Modal AI rewrite error:', err);
@@ -416,67 +243,7 @@ ${quizBlock}`;
     }
   };
 
-  // Generate AI Quiz strictly for a specific slide [Slide số X]
-  const handleGenerateSlideAiQuiz = async (slide: Slide) => {
-    if (generatingQuizSlideNum !== null) return;
-    const pageNum = slide.pageNumber;
-    setGeneratingQuizSlideNum(pageNum);
-
-    try {
-      const res = await fetch('/api/gemini/quiz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: project.title,
-          slideNumber: pageNum,
-          slides: [
-            {
-              pageNumber: pageNum,
-              title: slide.title,
-              originalSummary: slide.originalSummary,
-              points: slide.points,
-            },
-          ],
-          count: 1,
-          audience: project.audience,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.quizzes && data.quizzes.length > 0) {
-        const newQuestions: QuizQuestion[] = data.quizzes.map(
-          (q: QuizQuestion) => ({
-            ...q,
-            slideNumber: pageNum,
-          })
-        );
-
-        const updatedSlides = project.slides.map((s) =>
-          s.pageNumber === pageNum
-            ? {
-                ...s,
-                quizzes: [...(s.quizzes || []), ...newQuestions],
-              }
-            : s
-        );
-
-        onUpdateProject({
-          ...project,
-          slides: updatedSlides,
-          quizzes: [...project.quizzes, ...newQuestions],
-        });
-        showNotification(
-          `✨ Đã tạo thêm câu hỏi Quiz bám sát kiến thức [Slide số ${pageNum}]!`
-        );
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setGeneratingQuizSlideNum(null);
-    }
-  };
-
-  // Generate AI Quizzes across all slides
+  // Generate AI Quizzes
   const handleGenerateAiQuiz = async () => {
     setIsGeneratingAiQuiz(true);
     try {
@@ -485,13 +252,8 @@ ${quizBlock}`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: project.title,
-          slides: project.slides.map((s) => ({
-            pageNumber: s.pageNumber,
-            title: s.title,
-            originalSummary: s.originalSummary,
-            points: s.points,
-          })),
-          count: Math.min(project.slides.length, 5),
+          slides: project.slides.map((s) => ({ title: s.title, points: s.points })),
+          count: 3,
           audience: project.audience,
         }),
       });
@@ -502,9 +264,6 @@ ${quizBlock}`;
           ...project,
           quizzes: [...project.quizzes, ...data.quizzes],
         });
-        showNotification(
-          '✨ Đã tạo thêm các câu hỏi Quiz dựa hoàn toàn trên nội dung các slide!'
-        );
       }
     } catch (e) {
       console.error(e);
@@ -513,71 +272,37 @@ ${quizBlock}`;
     }
   };
 
-  const handleAddManualQuiz = (slideNumber: number = 1) => {
-    const targetSlide =
-      project.slides.find((s) => s.pageNumber === slideNumber) ||
-      project.slides[0];
-    const firstPoint =
-      targetSlide?.points?.[0] ||
-      targetSlide?.originalSummary ||
-      'Nội dung chính trong slide';
-
+  const handleAddManualQuiz = () => {
     const newQuiz: QuizQuestion = {
-      id: `q-s${slideNumber}-${Date.now()}`,
-      slideNumber,
-      question: `[Slide số ${slideNumber}] Câu hỏi kiểm tra kiến thức trong slide "${
-        targetSlide?.title || `Slide ${slideNumber}`
-      }":`,
+      id: `q-${Date.now()}`,
+      question: 'Câu hỏi mới: Trọng tâm nội dung bài giảng là gì?',
       options: [
-        firstPoint.slice(0, 120),
-        'Phương án B',
-        'Phương án C',
-        'Phương án D',
+        'Lựa chọn chính xác A',
+        'Lựa chọn B',
+        'Lựa chọn C',
+        'Lựa chọn D',
       ],
       correctIndex: 0,
-      explanation: `Dựa trực tiếp vào nội dung trên Slide số ${slideNumber}.`,
+      explanation: 'Giải thích chi tiết cho đáp án chính xác.',
     };
-
-    const updatedSlides = project.slides.map((s) =>
-      s.pageNumber === slideNumber
-        ? { ...s, quizzes: [...(s.quizzes || []), newQuiz] }
-        : s
-    );
 
     onUpdateProject({
       ...project,
-      slides: updatedSlides,
       quizzes: [...project.quizzes, newQuiz],
     });
   };
 
   const handleDeleteQuiz = (id: string) => {
-    const updatedQuizzes = project.quizzes.filter((q) => q.id !== id);
-    const updatedSlides = project.slides.map((s) => ({
-      ...s,
-      quizzes: (s.quizzes || []).filter((q) => q.id !== id),
-    }));
     onUpdateProject({
       ...project,
-      slides: updatedSlides,
-      quizzes: updatedQuizzes,
+      quizzes: project.quizzes.filter((q) => q.id !== id),
     });
   };
 
   const handleUpdateQuiz = (id: string, updated: Partial<QuizQuestion>) => {
-    const updatedQuizzes = project.quizzes.map((q) =>
-      q.id === id ? { ...q, ...updated } : q
-    );
-    const updatedSlides = project.slides.map((s) => ({
-      ...s,
-      quizzes: (s.quizzes || []).map((q) =>
-        q.id === id ? { ...q, ...updated } : q
-      ),
-    }));
     onUpdateProject({
       ...project,
-      slides: updatedSlides,
-      quizzes: updatedQuizzes,
+      quizzes: project.quizzes.map((q) => (q.id === id ? { ...q, ...updated } : q)),
     });
   };
 
@@ -594,59 +319,42 @@ ${quizBlock}`;
 
   return (
     <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 pt-6 sm:pt-8 max-w-7xl mx-auto w-full">
-      <div className="space-y-4">
-        {/* Title Row */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Kết quả xử lý AI theo từng Slide
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Trình bày rõ ràng theo từng slide: Nội dung tóm tắt gốc (giữ nguyên 100%) · Kịch bản giọng đọc · Câu hỏi Quiz ôn tập
-            </p>
+      <div className="space-y-3.5 sm:space-y-4">
+        {/* Title Row matching Screenshot 4 */}
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
+            Tạo lời giảng/Quiz
+          </h1>
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2.5 sm:px-3 py-1 rounded-full shrink-0">
+            {project.slides.length} slide • {project.units.length} phần
+          </span>
+        </div>
+
+        {/* Warning / Notice Banner */}
+        <div className="bg-amber-50 dark:bg-[#241712] border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 sm:p-3.5 flex items-center gap-2.5 sm:gap-3 text-xs text-amber-900 dark:text-amber-200 shadow-xs">
+          <div className="w-6 h-6 rounded-lg bg-amber-600/30 flex items-center justify-center text-amber-400 shrink-0">
+            <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <span>{project.slides.length} slide gốc</span>
-            <span>·</span>
-            <span>{project.quizzes.length} câu hỏi Quiz</span>
+          <div className="leading-relaxed">
+            <strong>Kiểm tra lại lời giảng và câu hỏi do SlideEdu soạn.</strong>{' '}
+            Bạn có thể chỉnh sửa nội dung hoặc phát âm thanh thuyết trình bất cứ lúc nào.
           </div>
         </div>
 
-        {/* Strict Rule Verification Banner */}
-        <div className="bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 dark:text-emerald-200 shadow-2xs">
-          <div className="flex items-start sm:items-center gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
-            <div className="leading-relaxed">
-              <strong>Chế độ Sao chép &amp; Xử lý Nghiêm ngặt:</strong> Toàn bộ nội dung cốt lõi, kiến thức và số liệu giữ nguyên 100% theo tài liệu PDF gốc. Kịch bản giọng đọc và Câu hỏi Quiz chỉ sử dụng kiến thức có sẵn trong từng slide.
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleCopyStandardOutput}
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shrink-0 transition-colors cursor-pointer"
-          >
-            {copiedFormatted ? (
-              <>
-                <Check className="w-3.5 h-3.5" />
-                <span>Đã sao chép chuẩn</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Sao chép đầu ra chuẩn</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Voice Selection & Quick Action Toolbar */}
+        {/* Sub-bar with Unit info, Voice Selection & Actions matching Screenshot 4 */}
         <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs shadow-xs text-slate-800 dark:text-slate-200">
+          {/* Active Unit Indicator */}
+          <div className="flex items-center gap-2">
+            <span className="text-cyan-400 font-bold">
+              Phần 1 • slide 1–{project.slides.length}
+            </span>
+          </div>
+
           {/* 4 Voice Options Selector */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-600 dark:text-slate-400 font-medium shrink-0">
-              Giọng đọc AI (TTS):
-            </span>
-
+            <span className="text-slate-600 dark:text-slate-400 font-medium shrink-0">Giọng đọc bài giảng:</span>
+            
+            {/* 4 Quick Voice Selection Buttons */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {VOICE_PROFILES.map((vp) => {
                 const isCurrent = getVoiceProfile(selectedVoice).id === vp.id;
@@ -667,12 +375,14 @@ ${quizBlock}`;
                     }`}
                     title={`${vp.name} - ${vp.description}`}
                   >
+                    <span>{vp.gender === 'female' ? '👩' : '👨'}</span>
                     <span>{vp.shortLabel}</span>
                   </button>
                 );
               })}
             </div>
 
+            {/* Test Voice Audio Button */}
             <button
               type="button"
               onClick={() => {
@@ -684,47 +394,27 @@ ${quizBlock}`;
                   ? 'bg-cyan-600 text-white animate-pulse'
                   : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700'
               }`}
+              title="Nghe thử giọng đọc được chọn"
             >
-              <Volume2 className="w-3.5 h-3.5 text-cyan-500" />
-              <span>
-                {isPlayingAudio === 'sample-voice' ? 'Đang đọc...' : 'Nghe thử'}
-              </span>
+              <Volume2 className={`w-3.5 h-3.5 ${isPlayingAudio === 'sample-voice' ? 'text-white' : 'text-cyan-600 dark:text-cyan-400'}`} />
+              <span>{isPlayingAudio === 'sample-voice' ? 'Đang đọc...' : 'Nghe thử'}</span>
             </button>
           </div>
 
-          {/* Right Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleRewriteAllWithAi}
-              disabled={isRewritingAll}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {isRewritingAll ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Đang xử lý lại...</span>
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-3.5 h-3.5" />
-                  <span>AI chuẩn hóa lại toàn bộ Slide</span>
-                </>
-              )}
-            </button>
-
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2">
             <button
               onClick={onOpenPreview}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-amber-600/20 text-amber-700 dark:text-amber-300 hover:bg-amber-600/30 border border-amber-500/30 font-medium transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 active:bg-amber-600/40 border border-amber-500/30 font-medium transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Trình chiếu</span>
+              <span>Xem bài giảng</span>
             </button>
 
             <button
               onClick={handleExportPowerPoint}
               disabled={isExportingPptx}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 active:bg-red-600/40 border border-red-500/30 font-medium transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{isExportingPptx ? 'Đang tạo...' : 'Tải PPTX'}</span>
@@ -732,388 +422,114 @@ ${quizBlock}`;
           </div>
         </div>
 
-        {/* View Mode Tabs */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-          <button
-            onClick={() => setActiveTab('per_slide')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'per_slide'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Theo từng Slide (Đầy đủ 3 mục)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('formatted')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeTab === 'formatted'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Văn bản chuẩn theo từng Slide</span>
-          </button>
-
+        {/* Tab Buttons: [Lời giảng] & [Câu hỏi] */}
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
           <button
             onClick={() => setActiveTab('script')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeTab === 'script'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span>Chỉ xem Kịch bản giọng đọc ({project.slides.length})</span>
+            <span>Lời giảng</span>
+            <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded-full">
+              {project.slides.length}
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab('quiz')}
-            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeTab === 'quiz'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span>Chỉ xem Câu hỏi Quiz ({project.quizzes.length})</span>
+            <span>Câu hỏi</span>
+            <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded-full">
+              {project.quizzes.length}
+            </span>
           </button>
         </div>
 
-        {/* ================= TAB 1: THEO TỪNG SLIDE (ĐẦY ĐỦ 3 MỤC CHUẨN PROMPT) ================= */}
-        {activeTab === 'per_slide' && (
-          <div className="space-y-6">
-            {project.slides.map((slide, sIdx) => {
-              const pageNum = slide.pageNumber || sIdx + 1;
-              const isPlaying = isPlayingAudio === slide.id;
-              const isRewritingThis = rewritingSlideId === slide.id;
-              const slideQuizzes = getQuizzesForSlide(slide, sIdx);
-              const isGeneratingThisSlideQuiz =
-                generatingQuizSlideNum === pageNum;
-
-              return (
-                <div
-                  key={slide.id || pageNum}
-                  className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm"
-                >
-                  {/* Slide Header Banner: [Slide số X] */}
-                  <div className="bg-slate-100/90 dark:bg-[#131d33] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold shrink-0">
-                        [Slide số {pageNum}]
-                      </span>
-                      <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
-                        {slide.title}
-                      </h2>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-500 dark:text-slate-400 tabular-nums">
-                        ~{slide.duration} giây · {slide.wordCount} từ
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(slide)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-cyan-500 text-xs font-medium cursor-pointer"
-                      >
-                        <Edit3 className="w-3 h-3 text-amber-500" />
-                        <span>Chỉnh sửa</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Slide Body: 3 Required Sections */}
-                  <div className="p-4 sm:p-5 space-y-5">
-                    {/* SECTION 1: Nội dung tóm tắt gốc (giữ nguyên) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                      {/* Original PDF Thumbnail Preview */}
-                      <div className="lg:col-span-4 space-y-2">
-                        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-center min-h-[160px]">
-                          {slide.thumbnailUrl ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={slide.thumbnailUrl}
-                              alt={`Slide số ${pageNum}`}
-                              className="max-h-[190px] w-auto object-contain rounded shadow-xs"
-                            />
-                          ) : (
-                            <div className="w-full p-3 text-left space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-                              <div className="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1">
-                                {slide.title}
-                              </div>
-                              <ul className="list-disc pl-4 space-y-1 text-[11px]">
-                                {slide.points.slice(0, 4).map((pt, i) => (
-                                  <li key={i}>{pt}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Verbatim Original Content */}
-                      <div className="lg:col-span-8 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                            • Nội dung tóm tắt gốc (giữ nguyên 100% như tài liệu PDF gốc):
-                          </span>
-                        </div>
-                        <div className="bg-emerald-50/40 dark:bg-[#0f1a2c] border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
-                          {slide.originalSummary ||
-                            slide.points.map((p) => `• ${p}`).join('\n')}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* SECTION 2: Kịch bản giọng đọc (Voiceover Script) */}
-                    <div className="space-y-2 pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-cyan-700 dark:text-cyan-400">
-                          • Kịch bản giọng đọc (Voiceover Script):
-                        </span>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleSpeech(slide.script, slide.id)}
-                            className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                              isPlaying
-                                ? 'bg-amber-600 text-white animate-pulse'
-                                : 'bg-cyan-600/15 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-600/25 border border-cyan-500/30'
-                            }`}
-                          >
-                            {isPlaying ? (
-                              <>
-                                <Pause className="w-3.5 h-3.5" />
-                                <span>Dừng đọc</span>
-                              </>
-                            ) : (
-                              <>
-                                <Volume2 className="w-3.5 h-3.5" />
-                                <span>Đọc lời giảng AI (TTS)</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleAiPolishScript(slide.id)}
-                            disabled={isRewritingThis || isRewritingAll}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 hover:border-cyan-500 disabled:opacity-50 cursor-pointer"
-                          >
-                            {isRewritingThis ? (
-                              <>
-                                <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
-                                <span>Đang viết lại...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="w-3 h-3 text-cyan-500" />
-                                <span>AI viết lại (Giữ nguyên ý gốc)</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-50 dark:bg-[#12192c] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
-                        {slide.script}
-                      </div>
-                    </div>
-
-                    {/* SECTION 3: Câu hỏi Quiz ôn tập (của riêng Slide số X) */}
-                    <div className="space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
-                          • Câu hỏi Quiz ôn tập ([Slide số {pageNum}] — Chỉ dựa trên kiến thức trong slide này):
-                        </span>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleGenerateSlideAiQuiz(slide)}
-                            disabled={isGeneratingThisSlideQuiz}
-                            className="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                          >
-                            {isGeneratingThisSlideQuiz ? (
-                              <>
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                                <span>Đang tạo...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="w-3 h-3" />
-                                <span>+ Tạo thêm Quiz từ Slide {pageNum}</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleAddManualQuiz(pageNum)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium flex items-center gap-1 cursor-pointer"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>Thủ công</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {slideQuizzes.length === 0 ? (
-                        <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 text-center text-xs text-slate-500">
-                          Chưa có câu hỏi Quiz cho Slide số {pageNum}. Nhấn{' '}
-                          <strong>&ldquo;+ Tạo thêm Quiz từ Slide {pageNum}&rdquo;</strong> để AI tạo câu hỏi bám sát nội dung slide này.
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {slideQuizzes.map((q, qIdx) => (
-                            <div
-                              key={q.id || qIdx}
-                              className="bg-slate-50/80 dark:bg-[#101729] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-start gap-2 flex-1">
-                                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[11px] shrink-0 mt-1">
-                                    Câu {qIdx + 1}
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={q.question}
-                                    onChange={(e) =>
-                                      handleUpdateQuiz(q.id, {
-                                        question: e.target.value,
-                                      })
-                                    }
-                                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-cyan-500"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => handleDeleteQuiz(q.id)}
-                                  className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
-                                  title="Xóa câu hỏi"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-2 sm:pl-6">
-                                {(q.options || []).map((opt, optIdx) => {
-                                  const isCorrect = q.correctIndex === optIdx;
-                                  const letter = String.fromCharCode(
-                                    65 + optIdx
-                                  );
-                                  return (
-                                    <div
-                                      key={optIdx}
-                                      onClick={() =>
-                                        handleUpdateQuiz(q.id, {
-                                          correctIndex: optIdx,
-                                        })
-                                      }
-                                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition-colors ${
-                                        isCorrect
-                                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/80 text-emerald-900 dark:text-emerald-200'
-                                          : 'bg-white dark:bg-slate-900/90 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                                      }`}
-                                    >
-                                      <span
-                                        className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                                          isCorrect
-                                            ? 'bg-emerald-600 text-white'
-                                            : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                        }`}
-                                      >
-                                        {letter}
-                                      </span>
-                                      <input
-                                        type="text"
-                                        value={opt}
-                                        onChange={(e) => {
-                                          const newOpts = [...q.options];
-                                          newOpts[optIdx] = e.target.value;
-                                          handleUpdateQuiz(q.id, {
-                                            options: newOpts,
-                                          });
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="bg-transparent border-none text-xs w-full focus:outline-none"
-                                      />
-                                      {isCorrect && (
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-auto" />
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              <div className="pl-2 sm:pl-6 flex items-center gap-2 text-[11px]">
-                                <span className="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-                                  Giải thích:
-                                </span>
-                                <input
-                                  type="text"
-                                  value={q.explanation}
-                                  onChange={(e) =>
-                                    handleUpdateQuiz(q.id, {
-                                      explanation: e.target.value,
-                                    })
-                                  }
-                                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-[11px] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ================= TAB 2: VĂN BẢN CHUẨN THEO TỪNG SLIDE ================= */}
-        {activeTab === 'formatted' && (
-          <div className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Đầu ra trình bày chuẩn theo từng Slide
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Định dạng chuẩn gồm: [Slide số X] · Nội dung tóm tắt gốc (giữ nguyên) · Kịch bản giọng đọc · Câu hỏi Quiz ôn tập
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyStandardOutput}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer"
-              >
-                {copiedFormatted ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Đã sao chép!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Sao chép toàn bộ văn bản</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            <pre className="w-full bg-slate-50 dark:bg-[#090e1a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs text-slate-800 dark:text-slate-200 font-sans whitespace-pre-wrap leading-relaxed max-h-[600px] overflow-y-auto">
-              {buildStandardFormattedText()}
-            </pre>
-          </div>
-        )}
-
-        {/* ================= TAB 3: CHỈ XEM KỊCH BẢN GIỌNG ĐỌC ================= */}
+        {/* TAB 1: LỜI GIẢNG CARDS */}
         {activeTab === 'script' && (
           <div className="space-y-4">
+            {/* AI Banner Toolbar with Grade Selector */}
+            <div className="bg-slate-50 dark:bg-[#0f172a] border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3 sm:p-3.5 space-y-2.5 shadow-xs text-slate-800 dark:text-slate-200">
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-white text-xs sm:text-sm">Google Gemini AI</span>
+                    <span className="text-slate-400 text-xs ml-1.5 hidden md:inline">
+                      — Tự động tối ưu văn phong kịch bản theo lứa tuổi
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRewriteAllWithAi}
+                  disabled={isRewritingAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-95 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-500/15 disabled:opacity-50 cursor-pointer"
+                  title="Google AI sẽ viết lại kịch bản cho tất cả slide theo đúng cấp học đã chọn"
+                >
+                  {isRewritingAll ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang viết lại tất cả...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>AI viết lại toàn bộ slide</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Dedicated Grade Selector Row */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium shrink-0">
+                  <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Cấp học:</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    { label: 'Học sinh Tiểu học (Lớp 1 - 5)', short: '🎒 Tiểu học' },
+                    { label: 'Học sinh THCS (Lớp 6 - 9)', short: '📘 THCS' },
+                    { label: 'Học sinh THPT (Lớp 10 - 12)', short: '🎓 THPT' },
+                    { label: 'Sinh viên đại học/cao đẳng', short: '🏛️ Đại học' },
+                    { label: 'Chuyên viên / Người đi làm', short: '💼 Đi làm' },
+                  ].map((item) => {
+                    const isSelected = project.audience === item.label || project.audience.includes(item.short.replace(/[^\w]/g, ''));
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => {
+                          onUpdateProject({ ...project, audience: item.label });
+                          showNotification(`Đã chuyển cấp học sang: ${item.short}`);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border cursor-pointer ${
+                          isSelected
+                            ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        {item.short}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {project.slides.map((slide, sIdx) => {
               const isPlaying = isPlayingAudio === slide.id;
               const isRewritingThis = rewritingSlideId === slide.id;
@@ -1121,29 +537,44 @@ ${quizBlock}`;
               return (
                 <div
                   key={slide.id}
-                  className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid shadow-sm grid-cols-1 md:grid-cols-12 gap-5 items-start"
+                  className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid shadow-sm grid-cols-1 md:grid-cols-12 gap-5 items-start hover:border-slate-700 transition-colors"
                 >
+                  {/* Left Column: Thumbnail & Duration */}
                   <div className="md:col-span-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      <span>[Slide số {slide.pageNumber || sIdx + 1}]</span>
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                      <span>Slide {sIdx + 1}</span>
                       <span className="text-[11px] text-slate-400">
-                        ~{slide.duration} giây · {slide.wordCount} từ
+                        ~{slide.duration} giây • {slide.wordCount} từ
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line max-h-36 overflow-y-auto">
-                      <strong className="block text-emerald-600 dark:text-emerald-400 mb-1">
-                        Nội dung tóm tắt gốc (giữ nguyên):
-                      </strong>
-                      {slide.originalSummary || slide.points.join('\n')}
+                    {/* Slide Mini Canvas / Card */}
+                    <div className="bg-white rounded-lg p-4 shadow-sm min-h-[140px] flex flex-col justify-between text-slate-800 select-none">
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-900 uppercase border-b border-slate-200 pb-1 mb-1 line-clamp-1">
+                          {slide.title}
+                        </div>
+                        <ul className="text-[10px] text-slate-600 space-y-1 list-disc pl-3">
+                          {slide.points.slice(0, 2).map((pt, pIdx) => (
+                            <li key={pIdx} className="line-clamp-1">
+                              {pt}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="text-[9px] text-slate-400 pt-1 border-t border-slate-100 flex justify-between">
+                        <span>SlideEdu PPT</span>
+                        <span>Trang {sIdx + 1}</span>
+                      </div>
                     </div>
 
+                    {/* Speech / Audio trigger button */}
                     <button
                       onClick={() => handleSpeech(slide.script, slide.id)}
-                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                      className={`w-full py-1.5 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
                         isPlaying
-                          ? 'bg-amber-600 text-white animate-pulse'
-                          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800'
+                           ? 'bg-amber-600 text-white animate-pulse'
+                          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700'
                       }`}
                     >
                       {isPlaying ? (
@@ -1160,10 +591,11 @@ ${quizBlock}`;
                     </button>
                   </div>
 
+                  {/* Right Column: Lecture Script Editor */}
                   <div className="md:col-span-8 space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        Kịch bản giọng đọc cho [Slide số {slide.pageNumber || sIdx + 1}]
+                      <div className="text-xs font-bold text-slate-300">
+                        Lời giảng cho slide {sIdx + 1}
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -1171,18 +603,26 @@ ${quizBlock}`;
                           type="button"
                           onClick={() => handleAiPolishScript(slide.id)}
                           disabled={isRewritingThis || isRewritingAll}
-                          className="flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline disabled:opacity-50 cursor-pointer"
+                          className="flex items-center gap-1 text-[11px] text-cyan-400 hover:text-cyan-300 disabled:opacity-50 transition-colors cursor-pointer"
+                          title="Dùng Google Gemini viết lại lời giảng sư phạm tự nhiên"
                         >
-                          <Sparkles className="w-3 h-3" />
-                          <span>
-                            {isRewritingThis ? 'Đang viết lại...' : 'AI viết lại'}
-                          </span>
+                          {isRewritingThis ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                              <span className="text-cyan-400 font-semibold">Đang viết lại...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3 h-3 text-cyan-400" />
+                              <span>AI viết lại</span>
+                            </>
+                          )}
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(slide)}
-                          className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                          className="flex items-center gap-1 text-[11px] text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Sửa lời giảng</span>
@@ -1190,6 +630,7 @@ ${quizBlock}`;
                       </div>
                     </div>
 
+                    {/* Script Content Card */}
                     <div className="bg-slate-50 dark:bg-[#12192c] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed min-h-[120px]">
                       {slide.script}
                     </div>
@@ -1200,150 +641,181 @@ ${quizBlock}`;
           </div>
         )}
 
-        {/* ================= TAB 4: CHỈ XEM CÂU HỎI QUIZ ================= */}
+        {/* TAB 2: CÂU HỎI TRẮC NGHIỆM */}
         {activeTab === 'quiz' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-1">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Danh sách {project.quizzes.length} câu hỏi Quiz ôn tập (Bám sát 100% từng Slide gốc)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleGenerateAiQuiz}
-                  disabled={isGeneratingAiQuiz}
-                  className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>
-                    {isGeneratingAiQuiz ? 'Đang tạo...' : '+ Thêm câu hỏi bằng AI'}
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleAddManualQuiz(1)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Thủ công</span>
-                </button>
-              </div>
-            </div>
-
-            {project.quizzes.map((q, qIdx) => (
-              <div
-                key={q.id || qIdx}
-                className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2.5 flex-1">
-                    <span className="px-2 py-1 rounded-lg bg-blue-600/15 text-blue-600 dark:text-cyan-400 font-bold text-xs shrink-0 mt-0.5">
-                      [Slide số {q.slideNumber || (qIdx % project.slides.length) + 1}]
-                    </span>
-                    <input
-                      type="text"
-                      value={q.question}
-                      onChange={(e) =>
-                        handleUpdateQuiz(q.id, { question: e.target.value })
-                      }
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 font-semibold"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => handleDeleteQuiz(q.id)}
-                    className="text-slate-500 hover:text-red-400 transition-colors p-1 cursor-pointer"
-                    title="Xoá câu hỏi"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+            {project.quizzes.length === 0 ? (
+              /* Empty state matching Screenshot 5 */
+              <div className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-4 shadow-sm text-slate-800 dark:text-slate-200">
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 mx-auto">
+                  <HelpCircle className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-white">CÂU HỎI</h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Phần này chưa có câu hỏi trắc nghiệm nào. Tạo câu hỏi ngay tại đây.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
-                  {q.options.map((opt, optIdx) => {
-                    const isCorrect = q.correctIndex === optIdx;
-                    const letter = String.fromCharCode(65 + optIdx);
+                <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+                  <button
+                    onClick={handleGenerateAiQuiz}
+                    disabled={isGeneratingAiQuiz}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-2 shadow-md shadow-blue-500/20"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>
+                      {isGeneratingAiQuiz ? 'Đang soạn câu hỏi...' : 'Tạo câu hỏi tự động (AI)'}
+                    </span>
+                  </button>
 
-                    return (
-                      <div
-                        key={optIdx}
-                        onClick={() =>
-                          handleUpdateQuiz(q.id, { correctIndex: optIdx })
-                        }
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs transition-colors ${
-                          isCorrect
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500/80 text-emerald-900 dark:text-emerald-200'
-                            : 'bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            isCorrect
-                              ? 'bg-emerald-500 text-white'
-                              : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                          }`}
-                        >
-                          {letter}
+                  <button
+                    onClick={handleAddManualQuiz}
+                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Tạo câu hỏi thủ công</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Quiz List */
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-xs font-bold text-slate-300">
+                    Danh sách {project.quizzes.length} câu hỏi trắc nghiệm củng cố
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleGenerateAiQuiz}
+                      disabled={isGeneratingAiQuiz}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600/20 text-cyan-300 hover:bg-blue-600/30 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>{isGeneratingAiQuiz ? 'Đang tạo...' : '+ Thêm bằng AI'}</span>
+                    </button>
+                    <button
+                      onClick={handleAddManualQuiz}
+                      className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 text-xs font-semibold flex items-center gap-1.5 shadow-2xs"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Thủ công</span>
+                    </button>
+                  </div>
+                </div>
+
+                {project.quizzes.map((q, qIdx) => (
+                  <div
+                    key={q.id || qIdx}
+                    className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2.5 flex-1">
+                        <span className="w-6 h-6 rounded-lg bg-amber-600/20 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                          {qIdx + 1}
                         </span>
                         <input
                           type="text"
-                          value={opt}
-                          onChange={(e) => {
-                            const newOpts = [...q.options];
-                            newOpts[optIdx] = e.target.value;
-                            handleUpdateQuiz(q.id, { options: newOpts });
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="bg-transparent border-none text-xs w-full focus:outline-none"
+                          value={q.question}
+                          onChange={(e) =>
+                            handleUpdateQuiz(q.id, { question: e.target.value })
+                          }
+                          className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 font-semibold"
                         />
-                        {isCorrect && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
 
-                <div className="pl-4">
-                  <input
-                    type="text"
-                    value={q.explanation}
-                    placeholder="Giải thích lý do đáp án đúng..."
-                    onChange={(e) =>
-                      handleUpdateQuiz(q.id, { explanation: e.target.value })
-                    }
-                    className="w-full bg-slate-50 dark:bg-[#101729] border border-slate-300 dark:border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-400 italic focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
+                      <button
+                        onClick={() => handleDeleteQuiz(q.id)}
+                        className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                        title="Xoá câu hỏi"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* 4 Choices */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-8">
+                      {q.options.map((opt, optIdx) => {
+                        const isCorrect = q.correctIndex === optIdx;
+                        const letter = String.fromCharCode(65 + optIdx);
+
+                        return (
+                          <div
+                            key={optIdx}
+                            onClick={() =>
+                              handleUpdateQuiz(q.id, { correctIndex: optIdx })
+                            }
+                            className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer text-xs transition-colors ${
+                              isCorrect
+                                ? 'bg-emerald-950/40 border-emerald-500/80 text-emerald-200'
+                                : 'bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <span
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                isCorrect
+                                  ? 'bg-emerald-500 text-white'
+                                  : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {letter}
+                            </span>
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...q.options];
+                                newOpts[optIdx] = e.target.value;
+                                handleUpdateQuiz(q.id, { options: newOpts });
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="bg-transparent border-none text-xs w-full focus:outline-none"
+                            />
+                            {isCorrect && (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Explanation */}
+                    <div className="pl-8">
+                      <input
+                        type="text"
+                        value={q.explanation}
+                        placeholder="Giải thích lý do đáp án đúng..."
+                        onChange={(e) =>
+                          handleUpdateQuiz(q.id, { explanation: e.target.value })
+                        }
+                        className="w-full bg-slate-50 dark:bg-[#101729] border border-slate-300 dark:border-slate-800/80 rounded-lg px-3 py-1.5 text-[11px] text-slate-700 dark:text-slate-400 italic focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
 
-      {/* Script & Original Summary Edit Modal */}
+      {/* Script Edit Modal */}
       {editingSlideId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
-          <div className="w-full max-w-xl bg-white dark:bg-[#131b2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg bg-white dark:bg-[#131b2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Chỉnh sửa Nội dung gốc &amp; Kịch bản giọng đọc
-                </h3>
+                <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                   <GraduationCap className="w-3 h-3 text-cyan-400" />
                   <span>Cấp học:</span>
                   <select
                     value={project.audience}
-                    onChange={(e) =>
-                      onUpdateProject({ ...project, audience: e.target.value })
-                    }
-                    className="bg-transparent text-cyan-600 dark:text-cyan-300 font-semibold focus:outline-none cursor-pointer"
+                    onChange={(e) => onUpdateProject({ ...project, audience: e.target.value })}
+                    className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer"
                   >
                     {LEARNER_AUDIENCES.map((aud) => (
-                      <option
-                        key={aud}
-                        value={aud}
-                        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                      >
+                      <option key={aud} value={aud} className="bg-slate-900 text-white">
                         {aud}
                       </option>
                     ))}
@@ -1356,68 +828,56 @@ ${quizBlock}`;
                   type="button"
                   onClick={() => handleModalAiRewrite('pedagogical')}
                   disabled={isModalRewriting}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-600 text-white text-[11px] font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-700/60 text-cyan-300 hover:bg-cyan-900/60 text-[11px] font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Google Gemini viết lại theo chuẩn phong cách sư phạm của cấp học đã chọn"
                 >
                   {isModalRewriting ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
                   ) : (
-                    <Sparkles className="w-3 h-3" />
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
                   )}
-                  <span>AI viết lại bám sát gốc</span>
+                  <span>Google AI viết lại</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleModalAiRewrite('concise')}
+                  disabled={isModalRewriting}
+                  className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Viết ngắn gọn, súc tích"
+                >
+                  Ngắn gọn
                 </button>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">
-                Nội dung tóm tắt gốc (giữ nguyên):
-              </label>
-              <textarea
-                rows={4}
-                value={editedOriginalSummary}
-                onChange={(e) => setEditedOriginalSummary(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-cyan-600 dark:text-cyan-400 block">
-                Kịch bản giọng đọc (Voiceover Script):
-              </label>
-              <textarea
-                rows={6}
-                value={editedScriptText}
-                onChange={(e) => setEditedScriptText(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
-              />
-            </div>
+            <textarea
+              rows={6}
+              value={editedScriptText}
+              onChange={(e) => setEditedScriptText(e.target.value)}
+              placeholder="Nhập lời giảng hoặc bấm 'Google AI viết lại' để tự động tạo..."
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
+            />
 
             <div className="flex items-center justify-between text-[11px] text-slate-400">
               <span>
-                {editedScriptText.trim().split(/\s+/).filter(Boolean).length} từ
-                (~
-                {Math.round(
-                  (editedScriptText.trim().split(/\s+/).filter(Boolean).length /
-                    140) *
-                    60
-                )}{' '}
-                giây)
+                {editedScriptText.trim().split(/\s+/).filter(Boolean).length} từ (~{Math.round(editedScriptText.trim().split(/\s+/).filter(Boolean).length / 140 * 60)} giây)
               </span>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingSlideId(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSaveScript(editingSlideId)}
-                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs font-semibold text-white shadow-sm transition-colors cursor-pointer"
                 >
-                  Lưu cập nhật
+                  Lưu lời giảng
                 </button>
               </div>
             </div>
@@ -1427,26 +887,26 @@ ${quizBlock}`;
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-white dark:bg-[#0d162a] border border-cyan-500/40 text-slate-900 dark:text-cyan-200 shadow-2xl px-4 py-2.5 rounded-xl flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-white dark:bg-[#0d162a] border border-cyan-500/40 text-slate-900 dark:text-cyan-200 shadow-2xl px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
           <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Bottom Sticky Action Bar */}
+      {/* Bottom Sticky Action Bar matching Screenshot 4 & 5 */}
       <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between gap-3">
         <button
           onClick={onBack}
-          className="min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+          className="min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 active:bg-slate-300 dark:active:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
         >
           Quay lại
         </button>
 
         <button
           onClick={onContinue}
-          className="min-h-[44px] px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25 cursor-pointer"
+          className="min-h-[44px] px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
         >
-          <span>Tiếp tục đóng gói &amp; xuất bản</span>
+          <span>Tiếp tục</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

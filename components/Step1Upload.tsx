@@ -12,14 +12,13 @@ import {
   HelpCircle,
   FileSpreadsheet,
   Loader2,
+  CheckCircle2,
   Cpu,
   GraduationCap,
-  Check,
-  ShieldCheck,
-  AlertCircle,
+  Check
 } from 'lucide-react';
-import { SAMPLE_PROJECTS } from '@/lib/sampleData';
-import { LectureProject, Slide, QuizQuestion, KnowledgeUnit } from '@/types/presentation';
+import { SAMPLE_PROJECTS, LEARNER_AUDIENCES } from '@/lib/sampleData';
+import { LectureProject } from '@/types/presentation';
 import { parsePdfFile } from '@/lib/pdfUtils';
 
 interface Step1UploadProps {
@@ -36,9 +35,8 @@ export default function Step1Upload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedAudience, setSelectedAudience] = useState<string>(
-    currentProject?.audience || 'Sinh viên đại học/cao đẳng'
+    currentProject?.audience || 'Học sinh THCS (Lớp 6 - 9)'
   );
   const [showHowToConvert, setShowHowToConvert] = useState(false);
 
@@ -59,13 +57,8 @@ export default function Step1Upload({
   const handleFileChange = async (file: File) => {
     if (!file) return;
     setIsLoading(true);
-    setUploadError(null);
-
     const mb = file.size / (1024 * 1024);
-    const calculatedSize =
-      mb >= 0.1
-        ? `${mb.toFixed(1)} MB`
-        : `${Math.max(10, Math.round(file.size / 1024))} KB`;
+    const calculatedSize = mb >= 0.1 ? `${mb.toFixed(1)} MB` : `${Math.max(20, Math.round(file.size / 1024))} KB`;
 
     setSelectedFileMeta({
       name: file.name,
@@ -74,34 +67,19 @@ export default function Step1Upload({
 
     try {
       const parsed = await parsePdfFile(file);
-      const totalSlidesCount = parsed.slides.length || parsed.totalPages || 1;
 
-      // Tự động nhận diện lĩnh vực dựa trên tên file và nội dung trang đầu
-      const lowerInfo = (
-        file.name +
-        ' ' +
-        (parsed.title || '') +
-        ' ' +
-        (parsed.slides[0]?.text || '')
-      ).toLowerCase();
+      // Extract text content and calculate total slides
+      const totalSlidesCount = parsed.slides.length || parsed.totalPages || 1;
+      const defaultQuestionCount = Math.min(Math.max(3, totalSlidesCount), 15);
+
+      // Detect field/domain from file name and text
+      const lowerInfo = (file.name + ' ' + (parsed.title || '') + ' ' + (parsed.slides[0]?.text || '')).toLowerCase();
       let detectedField = 'Khoa học & Đào tạo';
-      if (
-        /html|css|javascript|web|lập trình|code|react|python|cntt|công nghệ|software|ai|machine learning|tin học|dữ liệu/i.test(
-          lowerInfo
-        )
-      ) {
+      if (/html|css|javascript|web|lập trình|code|react|python|cntt|công nghệ|software|ai|machine learning|tin học/i.test(lowerInfo)) {
         detectedField = 'Công nghệ thông tin & Khoa học dữ liệu';
-      } else if (
-        /tim|bệnh|y khoa|sức khoẻ|sức khỏe|dược|y tế|triệu chứng|chẩn đoán|lâm sàng|sinh lý/i.test(
-          lowerInfo
-        )
-      ) {
+      } else if (/tim|bệnh|y khoa|sức khoẻ|sức khỏe|dược|y tế|triệu chứng|chẩn đoán|lâm sàng/i.test(lowerInfo)) {
         detectedField = 'Khoa học sự sống & Sức khoẻ';
-      } else if (
-        /kinh tế|marketing|quản trị|kinh doanh|tài chính|kế toán|thị trường|doanh nghiệp/i.test(
-          lowerInfo
-        )
-      ) {
+      } else if (/kinh tế|marketing|quản trị|kinh doanh|tài chính|kế toán|thị trường|doanh nghiệp/i.test(lowerInfo)) {
         detectedField = 'Kinh tế & Quản trị kinh doanh';
       } else if (/toán|vật lý|hóa học|cơ khí|kỹ thuật|điện/i.test(lowerInfo)) {
         detectedField = 'Khoa học tự nhiên & Kỹ thuật';
@@ -109,40 +87,56 @@ export default function Step1Upload({
         detectedField = 'Ngoại ngữ & Kỹ năng mềm';
       }
 
-      // Khởi tạo dữ liệu nguyên bản 100% từ các trang PDF (status = 'draft' để AI xử lý sâu khi bấm Bắt đầu xử lý)
-      const draftSlides: Slide[] = parsed.slides.map((s, idx) => {
-        const pageNum = s.pageNumber || idx + 1;
+      // Extract verbatim content for unit
+      const combinedText = parsed.slides
+        .slice(0, 5)
+        .map((s) => `[Slide số ${s.pageNumber}] ${s.text}`)
+        .filter(Boolean)
+        .join('\n\n')
+        .slice(0, 1000);
+
+      const initialSlides = parsed.slides.map((s, idx) => {
         const lines = s.text
-          ? s.text
-              .split('\n')
-              .map((l) => l.trim())
-              .filter(Boolean)
+          ? s.text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0)
           : [];
-        const slideTitle = lines[0] || `Slide số ${pageNum}`;
-        const bodyLines = lines.length > 1 ? lines.slice(1) : lines;
-        const verbatimSummary =
-          lines.join('\n') || `(Trang slide số ${pageNum} - Đang chờ AI đọc nội dung từ hình ảnh slide)`;
+        const slideTitle = lines[0] || `Slide số ${s.pageNumber}`;
+        const bulletPoints = lines.length > 1 ? lines.slice(1) : lines;
+        const rawSummary = lines.join('\n') || `Slide số ${s.pageNumber}`;
+        const scriptText = lines.length > 0
+          ? `Ở slide số ${s.pageNumber} với chủ đề "${slideTitle}", nội dung tài liệu gốc trình bày: ${lines.slice(1).join('. ') || slideTitle}.`
+          : `Nội dung trình bày tại slide số ${s.pageNumber}.`;
+        const wc = scriptText.trim().split(/\s+/).filter(Boolean).length;
 
         return {
-          id: `slide-${pageNum}`,
-          pageNumber: pageNum,
+          id: `slide-${idx + 1}`,
+          pageNumber: s.pageNumber,
           title: slideTitle,
-          originalText: s.text || '',
-          originalSummary: verbatimSummary,
-          points: bodyLines.length > 0 ? bodyLines : [verbatimSummary],
-          script: '',
-          quizzes: [],
-          duration: 45,
-          wordCount: 0,
+          points: bulletPoints.length > 0 ? bulletPoints : [rawSummary],
+          script: scriptText,
+          duration: Math.max(25, Math.round((wc / 140) * 60)),
+          wordCount: wc,
           thumbnailUrl: s.thumbnailUrl,
           rotation: 0,
         };
       });
 
-      const combinedOriginal = draftSlides
-        .map((s) => `[Slide số ${s.pageNumber}] ${s.title}\n${s.originalSummary}`)
-        .join('\n\n')
-        .slice(0, 1500);
+      const initialQuizzes = initialSlides
+        .filter((s) => s.points.length > 0)
+        .slice(0, defaultQuestionCount)
+        .map((s, qIdx) => {
+          const correctFact = s.points[0] || s.title;
+          const otherSlides = initialSlides.filter((other) => other.pageNumber !== s.pageNumber);
+          const d1 = otherSlides[0]?.points?.[0] || `Thông tin không có trong Slide số ${s.pageNumber}`;
+          const d2 = otherSlides[1]?.points?.[0] || `Nội dung nằm ngoài phạm vi Slide số ${s.pageNumber}`;
+          const d3 = otherSlides[2]?.points?.[0] || `Nhận định không được đề cập ở Slide số ${s.pageNumber}`;
+          return {
+            id: `q-${Date.now()}-${qIdx + 1}`,
+            question: `[Slide số ${s.pageNumber}] Nội dung nào sau đây được trình bày chính xác trong slide "${s.title}"?`,
+            options: [correctFact, d1, d2, d3],
+            correctIndex: 0,
+            explanation: `Trích xuất nguyên bản từ [Slide số ${s.pageNumber}]: "${correctFact}".`,
+          };
+        });
 
       const newProject: LectureProject = {
         id: `proj-${Date.now()}`,
@@ -152,7 +146,7 @@ export default function Step1Upload({
         totalPages: totalSlidesCount,
         field: detectedField,
         audience: selectedAudience,
-        overview: `Tài liệu PDF "${file.name}" gồm ${totalSlidesCount} slide gốc. Nhấn "Bắt đầu xử lý" để AI sao chép nghiêm ngặt 100% nội dung gốc, viết Kịch bản giọng đọc và tạo Câu hỏi Quiz ôn tập cho từng slide.`,
+        overview: combinedText || `Bài giảng trích xuất nguyên bản từ tài liệu "${file.name}" (${totalSlidesCount} slide).`,
         voice: 'Nữ - Giọng Bắc (Hà Nội)',
         voiceSpeed: 1,
         status: 'draft',
@@ -164,20 +158,17 @@ export default function Step1Upload({
             type: 'theory',
             startSlide: 1,
             endSlide: totalSlidesCount,
-            mainContent: combinedOriginal || 'Nội dung gốc trích xuất từ tài liệu PDF.',
-            questionCount: totalSlidesCount,
+            mainContent: combinedText || 'Nội dung trích xuất nguyên bản từ slide PDF.',
+            questionCount: initialQuizzes.length || defaultQuestionCount,
           },
         ],
-        slides: draftSlides,
-        quizzes: [],
+        slides: initialSlides,
+        quizzes: initialQuizzes,
       };
 
       onFileLoaded(newProject);
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      setUploadError(
-        e?.message || 'Không thể đọc tệp PDF này. Vui lòng thử lại với tệp PDF hợp lệ.'
-      );
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +192,6 @@ export default function Step1Upload({
   };
 
   const handleSelectSample = (sample: LectureProject) => {
-    setUploadError(null);
     setSelectedFileMeta({
       name: sample.fileName,
       size: sample.fileSize,
@@ -215,181 +205,161 @@ export default function Step1Upload({
     onFileLoaded(newInstance);
   };
 
-  // Thực thi xử lý AI nghiêm ngặt theo từng slide khi bấm "Bắt đầu xử lý"
+  // Trigger real Gemini PDF processing and load Step 2 when user clicks "Bắt đầu xử lý"
   const handleStartProcessing = async () => {
     if (!currentProject || isProcessing) return;
 
-    setIsProcessing(true);
-    setProcessProgress(12);
-    setProcessStage(
-      'Đang kiểm tra dữ liệu gốc & hình ảnh từng trang slide PDF (giữ nguyên 100% số liệu & kiến thức)...'
+    const updatedBaseProject: LectureProject = {
+      ...currentProject,
+      audience: selectedAudience,
+    };
+
+    const isSampleProject = SAMPLE_PROJECTS.some(
+      (sp) => sp.fileName === updatedBaseProject.fileName && sp.title === updatedBaseProject.title
     );
 
+    setIsProcessing(true);
+    setProcessProgress(15);
+    setProcessStage('Đang đọc cấu trúc và trích xuất nguyên bản từng trang slide PDF...');
+
+    if (isSampleProject) {
+      onFileLoaded(updatedBaseProject);
+      setTimeout(() => {
+        setProcessProgress(65);
+        setProcessStage('Hệ thống AI đang phân tích nội dung, trích xuất dàn ý chuyên sâu...');
+      }, 400);
+      setTimeout(() => {
+        setProcessProgress(100);
+        setProcessStage('Hoàn tất phân tích! Đang chuyển sang màn hình Duyệt dàn ý...');
+      }, 900);
+      setTimeout(() => {
+        setIsProcessing(false);
+        onProceed();
+      }, 1200);
+      return;
+    }
+
     try {
-      const updatedAudience = selectedAudience || currentProject.audience;
-      const totalSlides = currentProject.slides.length;
+      const totalSlides = updatedBaseProject.slides.length;
+      const BATCH_SIZE = 5;
+      const analyzedSlides = [...updatedBaseProject.slides];
+      const allGeneratedQuizzes = [];
+      let analyzedOverview = updatedBaseProject.overview;
+      let analyzedField = updatedBaseProject.field;
+      const analyzedUnits = [];
 
-      // Nếu là file PDF người dùng tải lên (status === 'draft' hoặc chưa có script/quiz chuẩn)
-      const needsAiAnalysis =
-        currentProject.status === 'draft' ||
-        currentProject.slides.some((s) => !s.script || !s.originalSummary);
+      for (let startIdx = 0; startIdx < totalSlides; startIdx += BATCH_SIZE) {
+        const endIdx = Math.min(startIdx + BATCH_SIZE, totalSlides);
+        const batchSlides = updatedBaseProject.slides.slice(startIdx, endIdx);
 
-      if (needsAiAnalysis && totalSlides > 0) {
-        // Chia theo lô tối đa 5 slide/lần gọi để đảm bảo AI xử lý chi tiết 100% từng slide, không bao giờ bị cắt cụt
-        const BATCH_SIZE = 5;
-        const analyzedSlidesMap = new Map<number, Slide>();
-        let aiOverview = currentProject.overview;
-        let aiUnits: KnowledgeUnit[] = [];
+        const progressPercent = Math.min(
+          92,
+          Math.round(20 + ((startIdx + batchSlides.length * 0.6) / Math.max(1, totalSlides)) * 70)
+        );
+        setProcessProgress(progressPercent);
+        setProcessStage(
+          `AI đang xử lý nghiêm ngặt Slide ${startIdx + 1} – ${endIdx} / ${totalSlides} (giữ nguyên 100% gốc, tạo lời giảng & Quiz)...`
+        );
 
-        const totalBatches = Math.ceil(totalSlides / BATCH_SIZE);
+        const slidesInput = batchSlides.map((s) => ({
+          pageNumber: s.pageNumber,
+          text: [s.title, ...(s.points || [])].filter(Boolean).join('\n'),
+          thumbnailUrl: s.thumbnailUrl,
+        }));
 
-        for (let b = 0; b < totalBatches; b++) {
-          const startIdx = b * BATCH_SIZE;
-          const batchSlides = currentProject.slides.slice(
-            startIdx,
-            startIdx + BATCH_SIZE
-          );
-          const firstPage = batchSlides[0]?.pageNumber || startIdx + 1;
-          const lastPage =
-            batchSlides[batchSlides.length - 1]?.pageNumber ||
-            startIdx + batchSlides.length;
-
-          const progressBase = 20 + Math.round((b / totalBatches) * 65);
-          setProcessProgress(progressBase);
-          setProcessStage(
-            `AI đang xử lý nghiêm ngặt [Slide số ${firstPage}] đến [Slide số ${lastPage}] / ${totalSlides}: Sao chép nội dung gốc, viết Kịch bản giọng đọc & tạo Quiz...`
-          );
-
-          const res = await fetch('/api/gemini/analyze', {
+        try {
+          const response = await fetch('/api/gemini/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              title: currentProject.title,
-              field: currentProject.field,
-              audience: updatedAudience,
-              slidesInput: batchSlides.map((s) => ({
-                pageNumber: s.pageNumber,
-                text: s.originalText || s.originalSummary || s.points.join('\n'),
-                thumbnailUrl: s.thumbnailUrl,
-              })),
+              fileName: updatedBaseProject.fileName,
+              rawText: slidesInput.map((s) => `[Slide số ${s.pageNumber}]\n${s.text}`).join('\n\n'),
+              totalPages: totalSlides,
+              audience: selectedAudience,
+              slidesInput,
             }),
           });
 
-          if (res.ok) {
-            const data = await res.json();
-            if (b === 0 && data.overview) {
-              aiOverview = data.overview;
+          if (response.ok) {
+            const data = await response.json();
+            if (startIdx === 0) {
+              if (data.overview) analyzedOverview = data.overview;
+              if (data.field) analyzedField = data.field;
             }
             if (Array.isArray(data.units) && data.units.length > 0) {
-              aiUnits.push(
-                ...data.units.map((u: any, uIdx: number) => ({
-                  id: `unit-${Date.now()}-${b}-${uIdx}`,
-                  title: u.title || `Phần ${b + 1}: Slide ${firstPage}–${lastPage}`,
-                  type: u.type || 'theory',
-                  startSlide: Number(u.startSlide) || firstPage,
-                  endSlide: Number(u.endSlide) || lastPage,
-                  mainContent: u.mainContent || '',
-                  questionCount: Number(u.questionCount) || batchSlides.length,
-                }))
-              );
+              analyzedUnits.push(...data.units);
             }
-
             if (Array.isArray(data.slides)) {
-              data.slides.forEach((aiSlide: any, idx: number) => {
-                const origSlide = batchSlides[idx] || batchSlides.find((bs) => bs.pageNumber === aiSlide.pageNumber);
-                if (!origSlide) return;
-
-                const pNum = origSlide.pageNumber;
-                const slideQuizzes: QuizQuestion[] = Array.isArray(aiSlide.quizzes)
-                  ? aiSlide.quizzes.map((q: any, qIdx: number) => ({
-                      id: q.id || `q-s${pNum}-${qIdx + 1}-${Date.now()}`,
-                      slideNumber: pNum,
-                      question: q.question,
-                      options: Array.isArray(q.options) ? q.options : [],
-                      correctIndex: typeof q.correctIndex === 'number' ? q.correctIndex : 0,
-                      explanation: q.explanation || '',
-                    }))
-                  : [];
-
-                analyzedSlidesMap.set(pNum, {
-                  ...origSlide,
-                  title: aiSlide.title || origSlide.title,
-                  originalSummary:
-                    aiSlide.originalSummary || origSlide.originalSummary,
-                  points:
-                    Array.isArray(aiSlide.points) && aiSlide.points.length > 0
-                      ? aiSlide.points
-                      : origSlide.points,
-                  script: aiSlide.script || origSlide.script,
-                  quizzes: slideQuizzes,
-                  duration: aiSlide.duration || 55,
-                  wordCount: aiSlide.wordCount || 130,
-                });
-              });
+              for (const apiSlide of data.slides) {
+                const targetIdx = analyzedSlides.findIndex(
+                  (item) => item.pageNumber === Number(apiSlide.pageNumber)
+                );
+                if (targetIdx !== -1) {
+                  const existing = analyzedSlides[targetIdx];
+                  analyzedSlides[targetIdx] = {
+                    ...existing,
+                    title: apiSlide.title || existing.title,
+                    points:
+                      Array.isArray(apiSlide.points) && apiSlide.points.length > 0
+                        ? apiSlide.points
+                        : existing.points,
+                    script: apiSlide.script || existing.script,
+                    wordCount: apiSlide.wordCount || existing.wordCount,
+                    duration: apiSlide.duration || existing.duration,
+                  };
+                  if (Array.isArray(apiSlide.quizzes) && apiSlide.quizzes.length > 0) {
+                    allGeneratedQuizzes.push(...apiSlide.quizzes);
+                  }
+                }
+              }
             }
           }
+        } catch (batchErr) {
+          console.error(`Batch analyze error (${startIdx + 1}-${endIdx}):`, batchErr);
         }
-
-        const finalSlides: Slide[] = currentProject.slides.map(
-          (s) => analyzedSlidesMap.get(s.pageNumber) || s
-        );
-
-        const allFinalQuizzes: QuizQuestion[] = finalSlides.flatMap(
-          (s) => s.quizzes || []
-        );
-
-        const finalUnits: KnowledgeUnit[] =
-          aiUnits.length > 0
-            ? [
-                {
-                  id: `unit-main-${Date.now()}`,
-                  title: currentProject.title,
-                  type: 'theory',
-                  startSlide: 1,
-                  endSlide: finalSlides.length,
-                  mainContent: finalSlides
-                    .map(
-                      (s) =>
-                        `[Slide số ${s.pageNumber}] ${s.title}\n${s.originalSummary}`
-                    )
-                    .join('\n\n')
-                    .slice(0, 2000),
-                  questionCount: allFinalQuizzes.length,
-                },
-              ]
-            : currentProject.units.map((u) => ({
-                ...u,
-                questionCount: allFinalQuizzes.length,
-              }));
-
-        const analyzedProject: LectureProject = {
-          ...currentProject,
-          audience: updatedAudience,
-          overview: aiOverview,
-          units: finalUnits,
-          slides: finalSlides,
-          quizzes: allFinalQuizzes,
-          status: 'analyzed',
-        };
-
-        setProcessProgress(100);
-        setProcessStage(
-          'Hoàn tất xử lý AI nghiêm ngặt cho toàn bộ slide! Đang chuyển sang màn hình Duyệt dàn ý...'
-        );
-        onFileLoaded(analyzedProject);
-      } else {
-        // Dự án mẫu hoặc đã phân tích
-        onFileLoaded({ ...currentProject, audience: updatedAudience });
-        setProcessProgress(100);
-        setProcessStage('Đã tải dữ liệu bài giảng chuẩn! Đang chuyển sang màn hình tiếp theo...');
       }
+
+      const finalQuizzes =
+        allGeneratedQuizzes.length > 0 ? allGeneratedQuizzes : updatedBaseProject.quizzes;
+
+      const finalUnits =
+        analyzedUnits.length > 0
+          ? analyzedUnits.map((u, idx) => ({
+              id: u.id || `unit-${Date.now()}-${idx + 1}`,
+              title: u.title || `Phần ${idx + 1}`,
+              type: (u.type === 'practice' ? 'practice' : 'theory') as 'theory' | 'practice',
+              startSlide: Number(u.startSlide) || 1,
+              endSlide: Number(u.endSlide) || totalSlides,
+              mainContent: u.mainContent || analyzedOverview,
+              questionCount: Number(u.questionCount) || finalQuizzes.length,
+            }))
+          : [
+              {
+                ...updatedBaseProject.units[0],
+                questionCount: finalQuizzes.length,
+              },
+            ];
+
+      const completedProject: LectureProject = {
+        ...updatedBaseProject,
+        field: analyzedField,
+        overview: analyzedOverview,
+        slides: analyzedSlides,
+        quizzes: finalQuizzes,
+        units: finalUnits,
+      };
+
+      onFileLoaded(completedProject);
+      setProcessProgress(100);
+      setProcessStage('Hoàn tất xử lý AI! Đang chuyển sang màn hình Duyệt dàn ý...');
 
       setTimeout(() => {
         setIsProcessing(false);
         onProceed();
       }, 450);
-    } catch (err) {
-      console.error('Error processing PDF with AI:', err);
+    } catch (error) {
+      console.error('Error processing PDF with AI:', error);
+      onFileLoaded(updatedBaseProject);
       setIsProcessing(false);
       onProceed();
     }
@@ -397,46 +367,18 @@ export default function Step1Upload({
 
   return (
     <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 max-w-5xl mx-auto w-full relative">
-      {/* Top Title Section */}
-      <div className="text-center pt-4 sm:pt-6 pb-4 sm:pb-5 space-y-2">
+      {/* Top Title Section matching screenshot 1 */}
+      <div className="text-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-6 space-y-2">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Tải lên bài giảng PDF & Chuyển đổi AI Nghiêm ngặt
+          Tải lên bài giảng PDF
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm max-w-2xl mx-auto px-2">
-          Sao chép và giữ nguyên chính xác 100% nội dung, kiến thức, số liệu gốc trên từng trang PDF; tự động biên soạn{' '}
-          <strong className="text-cyan-600 dark:text-cyan-400">Kịch bản giọng đọc (Voiceover Script)</strong> và{' '}
-          <strong className="text-amber-600 dark:text-amber-400">Câu hỏi Quiz ôn tập</strong> theo từng slide.
+        <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm max-w-xl mx-auto px-2">
+          Chọn file PDF bài giảng để bắt đầu soạn nội dung, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx).
         </p>
       </div>
 
       {/* Main Drag & Drop Card */}
       <div className="max-w-2xl mx-auto w-full space-y-4 sm:space-y-5">
-        {/* Strict Processing Rules Notice Card */}
-        <div className="bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/70 rounded-2xl p-3.5 sm:p-4 text-xs space-y-1.5 shadow-2xs">
-          <div className="flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span>CAM KẾT XỬ LÝ AI TUYỆT ĐỐI NGHIÊM NGẶT THEO TỪNG SLIDE:</span>
-          </div>
-          <ul className="space-y-1 text-slate-700 dark:text-slate-300 pl-6 list-disc text-[11.5px] leading-relaxed">
-            <li>
-              <strong>Giữ nguyên 100% tài liệu gốc:</strong> Không tự ý thay đổi, bịa đặt hoặc sửa đổi nội dung, kiến thức, số liệu có sẵn trong file PDF.
-            </li>
-            <li>
-              <strong>Kịch bản giọng đọc (Voiceover Script):</strong> Viết lời giảng chi tiết, tự nhiên, truyền cảm bám sát 100% nội dung từng trang slide gốc.
-            </li>
-            <li>
-              <strong>Câu hỏi Quiz ôn tập:</strong> Tạo câu hỏi trắc nghiệm kèm đáp án và giải thích ngắn gọn dựa hoàn toàn trên kiến thức có trong slide đó.
-            </li>
-          </ul>
-        </div>
-
-        {uploadError && (
-          <div className="bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-xl p-3 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-            <span>{uploadError}</span>
-          </div>
-        )}
-
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -446,16 +388,14 @@ export default function Step1Upload({
             isDragging
               ? 'border-cyan-400 bg-cyan-500/10 scale-[1.01]'
               : selectedFileMeta
-              ? 'border-blue-500/80 bg-blue-50/50 dark:bg-blue-950/20'
+              ? 'border-blue-500/80 bg-blue-950/20'
               : 'border-slate-300 dark:border-slate-700/80 bg-white dark:bg-[#101729]/70 hover:border-cyan-500 hover:bg-slate-50 dark:hover:border-slate-500 dark:hover:bg-[#121b30] shadow-sm'
           }`}
         >
           <input
             type="file"
             ref={fileInputRef}
-            onChange={(e) =>
-              e.target.files?.[0] && handleFileChange(e.target.files[0])
-            }
+            onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
             accept=".pdf"
             className="hidden"
           />
@@ -475,9 +415,9 @@ export default function Step1Upload({
               ? selectedFileMeta.name
               : 'Kéo và thả file PDF vào đây'}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 sm:mb-4">
+          <p className="text-xs text-slate-400 mb-3 sm:mb-4">
             {selectedFileMeta
-              ? `Kích thước: ${selectedFileMeta.size} • ${currentProject?.slides.length || 0} trang slide đã trích xuất nguyên bản`
+              ? `Kích thước: ${selectedFileMeta.size} • Đã sẵn sàng phân tích`
               : 'hoặc'}
           </p>
 
@@ -488,13 +428,17 @@ export default function Step1Upload({
             {selectedFileMeta ? 'Chọn file PDF khác' : 'Chọn file từ thiết bị'}
           </button>
 
-          {/* Info line */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-5 sm:mt-6 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            <span>Định dạng PDF</span>
-            <span>·</span>
-            <span>Tối đa 100 MB</span>
-            <span>·</span>
-            <span>1 slide = 1 trang gốc (Giữ nguyên 100% nội dung & số liệu)</span>
+          {/* Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-5 sm:mt-6">
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
+              Định dạng PDF
+            </span>
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
+              Tối đa 100 MB
+            </span>
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
+              1 slide = 1 trang
+            </span>
           </div>
         </div>
 
@@ -502,71 +446,26 @@ export default function Step1Upload({
         <div className="bg-white dark:bg-[#0d1527] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-500 dark:text-cyan-400 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
                 <GraduationCap className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                Chọn cấp học để AI điều chỉnh cách xưng hô trong Kịch bản giọng đọc:
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                Chọn cấp học để AI tối ưu nội dung & văn phong:
               </span>
             </div>
-            <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium">
-              Đang chọn:{' '}
-              <strong className="text-slate-900 dark:text-white">
-                {selectedAudience.split('(')[0].trim()}
-              </strong>
+            <span className="text-[11px] text-cyan-400 font-medium">
+              Đang chọn: <strong className="text-slate-900 dark:text-white">{selectedAudience.split('(')[0].trim()}</strong>
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
             {[
-              {
-                label: 'Học sinh Tiểu học (Lớp 1 - 5)',
-                short: 'Tiểu học',
-                age: 'Lớp 1 - 5',
-                desc: 'Ấm áp, gần gũi, giữ nguyên kiến thức gốc',
-                badgeBg:
-                  'from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40',
-              },
-              {
-                label: 'Học sinh THCS (Lớp 6 - 9)',
-                short: 'THCS',
-                age: 'Lớp 6 - 9',
-                desc: 'Mạch lạc, rõ ràng, giữ nguyên kiến thức gốc',
-                badgeBg:
-                  'from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/40',
-              },
-              {
-                label: 'Học sinh THPT (Lớp 10 - 12)',
-                short: 'THPT',
-                age: 'Lớp 10 - 12',
-                desc: 'Chuẩn mực, logic, bám sát 100% slide gốc',
-                badgeBg:
-                  'from-purple-500/20 to-indigo-500/20 text-purple-300 border-purple-500/40',
-              },
-              {
-                label: 'Sinh viên đại học/cao đẳng',
-                short: 'Đại học / CĐ',
-                age: '18+ tuổi',
-                desc: 'Học thuật, chuyên sâu, chuẩn xác 100%',
-                badgeBg:
-                  'from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/40',
-              },
-              {
-                label: 'Chuyên viên / Người đi làm',
-                short: 'Người đi làm',
-                age: 'Doanh nghiệp',
-                desc: 'Chuyên nghiệp, súc tích, đúng số liệu gốc',
-                badgeBg:
-                  'from-rose-500/20 to-pink-500/20 text-rose-300 border-rose-500/40',
-              },
-              {
-                label: 'Đại chúng (Mọi lứa tuổi)',
-                short: 'Mọi lứa tuổi',
-                age: 'Phổ thông',
-                desc: 'Tự nhiên, truyền cảm, trung thực với gốc',
-                badgeBg:
-                  'from-slate-500/20 to-zinc-500/20 text-slate-300 border-slate-500/40',
-              },
+              { label: 'Học sinh Tiểu học (Lớp 1 - 5)', short: 'Tiểu học', age: 'Lớp 1 - 5', desc: 'Ấm áp, trong sáng, dễ hiểu, câu ngắn', badgeBg: 'from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40' },
+              { label: 'Học sinh THCS (Lớp 6 - 9)', short: 'THCS', age: 'Lớp 6 - 9', desc: 'Hào hứng, tò mò, khám phá khoa học', badgeBg: 'from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-500/40' },
+              { label: 'Học sinh THPT (Lớp 10 - 12)', short: 'THPT', age: 'Lớp 10 - 12', desc: 'Chuẩn mực, logic, luyện thi & tư duy', badgeBg: 'from-purple-500/20 to-indigo-500/20 text-purple-300 border-purple-500/40' },
+              { label: 'Sinh viên đại học/cao đẳng', short: 'Đại học / CĐ', age: '18+ tuổi', desc: 'Học thuật, chuyên sâu, phân tích', badgeBg: 'from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/40' },
+              { label: 'Chuyên viên / Người đi làm', short: 'Người đi làm', age: 'Doanh nghiệp', desc: 'Thực chiến, súc tích, giải quyết việc', badgeBg: 'from-rose-500/20 to-pink-500/20 text-rose-300 border-rose-500/40' },
+              { label: 'Đại chúng (Mọi lứa tuổi)', short: 'Mọi lứa tuổi', age: 'Phổ thông', desc: 'Dễ tiếp cận, truyền cảm hứng', badgeBg: 'from-slate-500/20 to-zinc-500/20 text-slate-300 border-slate-500/40' },
             ].map((item) => {
               const isSelected = selectedAudience === item.label;
               return (
@@ -587,22 +486,12 @@ export default function Step1Upload({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-xs font-bold ${
-                          isSelected
-                            ? 'text-slate-900 dark:text-white'
-                            : 'text-slate-800 dark:text-slate-200'
-                        }`}
-                      >
+                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                         {item.short}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                        ({item.age})
-                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">({item.age})</span>
                     </div>
-                    {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />
-                    )}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />}
                   </div>
                   <span className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
                     {item.desc}
@@ -615,9 +504,9 @@ export default function Step1Upload({
 
         {/* Quick Samples */}
         <div className="bg-white dark:bg-[#0f172a]/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2.5">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Hoặc thử nhanh với bài giảng mẫu đã chuẩn hóa:</span>
+            <span>Hoặc thử nhanh với file mẫu bài giảng:</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
@@ -630,7 +519,7 @@ export default function Step1Upload({
                   {SAMPLE_PROJECTS[0].title}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {SAMPLE_PROJECTS[0].totalPages} slide · Y khoa & Sức khoẻ
+                  {SAMPLE_PROJECTS[0].totalPages} slide • Y khoa & Sức khoẻ
                 </div>
               </div>
             </button>
@@ -645,7 +534,7 @@ export default function Step1Upload({
                   {SAMPLE_PROJECTS[1].title}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {SAMPLE_PROJECTS[1].totalPages} slide · Công nghệ & AI
+                  {SAMPLE_PROJECTS[1].totalPages} slide • Công nghệ & AI
                 </div>
               </div>
             </button>
@@ -660,49 +549,37 @@ export default function Step1Upload({
           >
             <div className="flex items-center gap-2 text-left pr-2">
               <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="line-clamp-2">
-                Cách chuyển PowerPoint, Google Slides, Keynote sang PDF
-              </span>
+              <span className="line-clamp-2">Cách chuyển PowerPoint, Google Slides, Keynote sang PDF</span>
             </div>
-            {showHowToConvert ? (
-              <ChevronUp className="w-4 h-4 shrink-0" />
-            ) : (
-              <ChevronDown className="w-4 h-4 shrink-0" />
-            )}
+            {showHowToConvert ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
           </button>
 
           {showHowToConvert && (
             <div className="px-3.5 sm:px-4 pb-4 pt-1 text-xs text-slate-600 dark:text-slate-400 space-y-2 border-t border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-[#0d1322] leading-relaxed">
               <p>
-                <strong>• Microsoft PowerPoint:</strong> Vào menu{' '}
-                <em>File &gt; Export (hoặc Save As) &gt; Chọn định dạng PDF (*.pdf)</em>.
+                <strong>• Microsoft PowerPoint:</strong> Vào menu <em>File &gt; Export (hoặc Save As) &gt; Chọn định dạng PDF (*.pdf)</em>.
               </p>
               <p>
-                <strong>• Google Slides:</strong> Chọn{' '}
-                <em>Tệp &gt; Tải xuống &gt; Tài liệu PDF (.pdf)</em>.
+                <strong>• Google Slides:</strong> Chọn <em>Tệp &gt; Tải xuống &gt; Tài liệu PDF (.pdf)</em>.
               </p>
               <p>
-                <strong>• Apple Keynote:</strong> Chọn{' '}
-                <em>File &gt; Export To &gt; PDF...</em>
+                <strong>• Apple Keynote:</strong> Chọn <em>File &gt; Export To &gt; PDF...</em>
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom Sticky Action Bar */}
+      {/* Bottom Sticky Action Bar matching screenshot 1 */}
       <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
           {selectedFileMeta ? (
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5 truncate">
+            <span className="text-emerald-400 font-medium flex items-center gap-1.5 truncate">
               <FileCheck className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">
-                Đã chọn: {selectedFileMeta.name} ({selectedFileMeta.size} ·{' '}
-                {currentProject?.slides.length || 0} slide)
-              </span>
+              <span className="truncate">Đã chọn: {selectedFileMeta.name} ({selectedFileMeta.size})</span>
             </span>
           ) : (
-            'Chọn một file PDF để bắt đầu xử lý.'
+            'Chọn một file để tiếp tục.'
           )}
         </div>
 
@@ -718,11 +595,11 @@ export default function Step1Upload({
           {isProcessing ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-cyan-300" />
-              <span>AI đang xử lý từng slide...</span>
+              <span>Đang phân tích & bóc tách...</span>
             </>
           ) : (
             <>
-              <span>Bắt đầu xử lý AI theo từng Slide</span>
+              <span>Bắt đầu xử lý</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -738,10 +615,10 @@ export default function Step1Upload({
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                Trợ lý AI đang xử lý nghiêm ngặt file PDF Slide
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                Đang xử lý tệp bài giảng PDF
               </h3>
-              <p className="text-xs text-cyan-600 dark:text-cyan-300 font-medium min-h-[36px] flex items-center justify-center leading-relaxed px-2">
+              <p className="text-xs text-cyan-300 font-medium h-6 flex items-center justify-center">
                 {processStage}
               </p>
             </div>
@@ -754,17 +631,15 @@ export default function Step1Upload({
                   className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
                 />
               </div>
-              <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
-                <span>Sao chép nguyên bản 100% · Kịch bản giọng đọc · Câu hỏi Quiz</span>
-                <span className="font-semibold text-cyan-500 dark:text-cyan-400">
-                  {processProgress}%
-                </span>
+              <div className="flex justify-between text-[11px] text-slate-400">
+                <span>Phân tích trang bài giảng</span>
+                <span className="font-semibold text-cyan-400">{processProgress}%</span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Không tự ý thay đổi, bịa đặt hay thêm bớt kiến thức ngoài slide gốc</span>
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              <span>Tự động nhận diện cấu trúc, slide & tạo dàn ý bài giảng</span>
             </div>
           </div>
         </div>

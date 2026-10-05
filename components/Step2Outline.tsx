@@ -461,23 +461,6 @@ export default function Step2Outline({
               </div>
             </div>
 
-            {/* Verbatim Original Summary Box for Current Slide */}
-            <div className="mb-3 bg-slate-50 dark:bg-[#11192d] border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-left space-y-1">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-cyan-600 dark:text-cyan-400">
-                  [Slide số {activeSlide?.pageNumber || previewSlideIndex + 1}] Nội dung tóm tắt gốc (giữ nguyên):
-                </span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                  100% nguyên bản PDF
-                </span>
-              </div>
-              <div className="text-xs text-slate-700 dark:text-slate-200 whitespace-pre-line leading-relaxed max-h-28 overflow-y-auto">
-                {activeSlide?.originalSummary ||
-                  activeSlide?.points?.map((p) => `• ${p}`).join('\n') ||
-                  activeSlide?.title}
-              </div>
-            </div>
-
             {/* Thumbnail pagination selector buttons */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2 border-t border-slate-800 max-h-24 overflow-y-auto">
               {project.slides.map((_, sIdx) => (

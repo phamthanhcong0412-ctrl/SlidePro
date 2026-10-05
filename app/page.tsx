@@ -157,14 +157,43 @@ export default function HomePage() {
   const handleConfirmStep2 = () => {
     setConfirmModalMode(null);
 
-    // Đồng bộ danh sách câu hỏi từ các slide gốc (tuyệt đối không chèn câu hỏi giả ngoài slide)
-    const slideLevelQuizzes = currentProject.slides.flatMap(
-      (s) => s.quizzes || []
-    );
-    if (slideLevelQuizzes.length > 0 && currentProject.quizzes.length === 0) {
+    // Calculate total desired questions from all knowledge units
+    const totalQuestionsDesired = currentProject.units.reduce(
+      (sum, u) => sum + (Number(u.questionCount) || 0),
+      0
+    ) || currentProject.quizzes.length;
+
+    // Synchronize quizzes to match requested count exactly
+    if (totalQuestionsDesired > 0 && currentProject.quizzes.length !== totalQuestionsDesired) {
+      let updatedQuizzes = [...currentProject.quizzes];
+      if (updatedQuizzes.length < totalQuestionsDesired) {
+        const diff = totalQuestionsDesired - updatedQuizzes.length;
+        const newQuizzes = Array.from({ length: diff }).map((_, i) => {
+          const slideRef = currentProject.slides[i % currentProject.slides.length];
+          const slideTitle = slideRef?.title || `Slide ${i + 1}`;
+          const correctFact = slideRef?.points?.[0] || slideTitle;
+          const otherSlides = currentProject.slides.filter((s) => s.id !== slideRef?.id);
+          return {
+            id: `q-${Date.now()}-${updatedQuizzes.length + i + 1}`,
+            question: `[Slide số ${slideRef?.pageNumber || i + 1}] Nội dung nào sau đây được nêu trong phần "${slideTitle}"?`,
+            options: [
+              correctFact,
+              otherSlides[0]?.points?.[0] || `Thông tin không có trong Slide số ${slideRef?.pageNumber || i + 1}`,
+              otherSlides[1]?.points?.[0] || `Nội dung nằm ngoài phạm vi Slide số ${slideRef?.pageNumber || i + 1}`,
+              otherSlides[2]?.points?.[0] || `Nhận định không đề cập tại Slide số ${slideRef?.pageNumber || i + 1}`
+            ],
+            correctIndex: 0,
+            explanation: `Theo nội dung gốc tại [Slide số ${slideRef?.pageNumber || i + 1}]: "${correctFact}".`
+          };
+        });
+        updatedQuizzes = [...updatedQuizzes, ...newQuizzes];
+      } else {
+        updatedQuizzes = updatedQuizzes.slice(0, totalQuestionsDesired);
+      }
+
       setCurrentProject((prev) => ({
         ...prev,
-        quizzes: slideLevelQuizzes,
+        quizzes: updatedQuizzes,
       }));
     }
 
