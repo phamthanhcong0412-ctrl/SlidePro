@@ -385,3 +385,7 @@ export async function exportProjectToPptx(project: LectureProject): Promise<void
 
   await pptx.writeFile({ fileName: `${sanitizedName}.pptx` });
 }
+
+// Backwards-compatible aliases for all modal & step components
+export const exportToPowerPoint = exportProjectToPptx;
+export default exportProjectToPptx;
