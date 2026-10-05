@@ -26,6 +26,26 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('slidepro_theme');
+                if (theme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                } else {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
         className="bg-slate-50 dark:bg-[#0b101b] text-slate-900 dark:text-slate-100 antialiased min-h-screen selection:bg-cyan-500 selection:text-white transition-colors duration-200"
         suppressHydrationWarning

@@ -45,10 +45,16 @@ export default function Header({
         setIsDark(false);
         document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.body.style.backgroundColor = '#f8fafc';
+        document.body.style.color = '#0f172a';
       } else {
         setIsDark(true);
         document.documentElement.classList.add('dark');
         document.documentElement.classList.remove('light');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.body.style.backgroundColor = '#090d18';
+        document.body.style.color = '#f8fafc';
       }
     } catch {
       setIsDark(true);
@@ -62,11 +68,19 @@ export default function Header({
       if (nextDark) {
         document.documentElement.classList.add('dark');
         document.documentElement.classList.remove('light');
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.body.style.backgroundColor = '#090d18';
+        document.body.style.color = '#f8fafc';
         localStorage.setItem('slidepro_theme', 'dark');
+        window.dispatchEvent(new CustomEvent('slidepro-theme-change', { detail: 'dark' }));
       } else {
         document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.body.style.backgroundColor = '#f8fafc';
+        document.body.style.color = '#0f172a';
         localStorage.setItem('slidepro_theme', 'light');
+        window.dispatchEvent(new CustomEvent('slidepro-theme-change', { detail: 'light' }));
       }
     } catch {}
   };

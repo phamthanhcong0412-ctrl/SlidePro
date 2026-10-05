@@ -283,7 +283,7 @@ export default function HomePage() {
             <Stepper currentStep={currentStep} />
           )}
 
-          <main className="flex-1 flex flex-col overflow-y-auto bg-[#0a0f1d] pb-16 lg:pb-0">
+          <main className="flex-1 flex flex-col overflow-y-auto bg-slate-100/70 dark:bg-[#0a0f1d] text-slate-900 dark:text-slate-100 pb-16 lg:pb-0 transition-colors duration-200">
             {activeView === 'editor' && (
               <>
                 {/* Step 1: Upload */}
@@ -367,14 +367,14 @@ export default function HomePage() {
 
           {activeView === 'inbox' && (
             <div className="flex-1 p-8 max-w-3xl mx-auto w-full space-y-4">
-              <h1 className="text-2xl font-bold text-white">Hộp thư thông báo</h1>
-              <div className="bg-[#0d1424] border border-slate-800 rounded-2xl p-5 space-y-2 text-xs">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Hộp thư thông báo</h1>
+              <div className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-2 text-xs shadow-xs text-slate-800 dark:text-slate-200">
                 <div className="flex items-center justify-between text-slate-400">
-                  <span className="font-semibold text-cyan-400">Hệ thống SlideEdu</span>
+                  <span className="font-semibold text-cyan-400">Hệ thống SlidePro</span>
                   <span>18:00 Hôm nay</span>
                 </div>
-                <h3 className="text-sm font-bold text-white">
-                  Chào mừng bạn đến với SlideEdu - Nền tảng Soạn bài giảng & Tạo Slide Giáo dục từ PDF
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Chào mừng bạn đến với SlidePro - Nền tảng Soạn bài giảng & Tạo Slide Giáo dục từ PDF
                 </h3>
                 <p className="text-slate-300 leading-relaxed">
                   Tài khoản của bạn đã được kích hoạt thành công với gói Miễn phí trọn đời. Chúc bạn tạo nên những bài giảng PowerPoint và E-Learning chất lượng cao!
@@ -387,7 +387,7 @@ export default function HomePage() {
       </div>
 
       {/* Mobile Bottom Navigation Bar (< lg) */}
-      <nav className="h-14 bg-[#0d1424]/95 border-t border-slate-800 backdrop-blur-md sticky bottom-0 left-0 right-0 z-30 lg:hidden flex items-center justify-around px-2 select-none shrink-0 shadow-lg">
+      <nav className="h-14 bg-white/95 dark:bg-[#0d1424]/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-md sticky bottom-0 left-0 right-0 z-30 lg:hidden flex items-center justify-around px-2 select-none shrink-0 shadow-lg">
         <button
           onClick={() => {
             setActiveView('editor');

@@ -108,10 +108,10 @@ export default function Step2Outline({
       <div className="space-y-4 sm:space-y-5">
         {/* Title & Overview Banner matching Screenshot 2 */}
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
             Duyệt dàn ý
           </h1>
-          <div className="bg-[#121a2d] border border-slate-800 rounded-xl p-3 sm:p-3.5 text-xs text-slate-300">
+          <div className="bg-slate-100 dark:bg-[#121a2d] border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-3.5 text-xs text-slate-700 dark:text-slate-300">
             <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1">
               Tổng quan
             </span>
@@ -122,7 +122,7 @@ export default function Step2Outline({
         </div>
 
         {/* Thông tin bài giảng Bar */}
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs text-slate-800 dark:text-slate-200">
           <div className="flex items-center gap-2 font-semibold text-amber-500">
             <span>Thông tin bài giảng</span>
           </div>
@@ -136,7 +136,7 @@ export default function Step2Outline({
                 onChange={(e) =>
                   onUpdateProject({ ...project, field: e.target.value })
                 }
-                className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none"
+                className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none cursor-pointer"
               >
                 {LECTURE_FIELDS.map((f) => (
                   <option key={f} value={f}>
@@ -147,7 +147,7 @@ export default function Step2Outline({
             </div>
 
             {/* Đối tượng người học */}
-            <div className="flex items-center gap-2 bg-slate-900 border border-slate-700/80 rounded-lg px-2.5 py-1">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg px-2.5 py-1">
               <GraduationCap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
               <span className="text-slate-400 font-medium text-[11px]">CẤP HỌC:</span>
               <select
@@ -158,7 +158,7 @@ export default function Step2Outline({
                 className="bg-transparent text-cyan-300 font-semibold focus:outline-none cursor-pointer text-xs"
               >
                 {LEARNER_AUDIENCES.map((a) => (
-                  <option key={a} value={a} className="bg-slate-900 text-white">
+                  <option key={a} value={a} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                     {a}
                   </option>
                 ))}
@@ -166,7 +166,7 @@ export default function Step2Outline({
             </div>
 
             {/* Tổng câu hỏi - dynamically calculated */}
-            <div className="flex items-center gap-1.5 text-slate-300 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
               <span>Tổng {totalQuestionCount} câu hỏi trắc nghiệm</span>
             </div>
@@ -174,7 +174,7 @@ export default function Step2Outline({
         </div>
 
         {/* Mobile View Switcher (< lg) */}
-        <div className="lg:hidden flex items-center p-1 bg-slate-900 border border-slate-800 rounded-xl gap-1">
+        <div className="lg:hidden flex items-center p-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl gap-1">
           <button
             onClick={() => setMobileTab('units')}
             className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 min-h-[40px] ${
@@ -213,8 +213,8 @@ export default function Step2Outline({
         {/* 3-Column Workspace */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Column 1: Đơn vị kiến thức list (width 3 cols) */}
-          <div className={`${mobileTab === 'units' ? 'block' : 'hidden'} lg:block lg:col-span-3 bg-[#0d1424] border border-slate-800 rounded-xl p-3 space-y-2`}>
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className={`${mobileTab === 'units' ? 'block' : 'hidden'} lg:block lg:col-span-3 bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2 shadow-xs text-slate-900 dark:text-white`}>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 uppercase tracking-wide">
                 <Layers className="w-3.5 h-3.5" />
                 <span>{project.units.length} Đơn vị kiến thức</span>
@@ -241,7 +241,7 @@ export default function Step2Outline({
                   className={`p-3 rounded-lg cursor-pointer transition-all border text-left min-h-[50px] ${
                     selectedUnitIndex === idx
                       ? 'bg-blue-950/40 border-blue-500/70 text-white shadow-sm ring-1 ring-blue-500/30'
-                      : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                      : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1">
@@ -270,8 +270,8 @@ export default function Step2Outline({
           </div>
 
           {/* Column 2: Edit Form for Current Unit (width 4 cols) */}
-          <div className={`${mobileTab === 'edit' ? 'block' : 'hidden'} lg:block lg:col-span-4 bg-[#0d1424] border border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-4`}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className={`${mobileTab === 'edit' ? 'block' : 'hidden'} lg:block lg:col-span-4 bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 space-y-4 shadow-xs text-slate-900 dark:text-white`}>
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div className="text-xs font-semibold text-slate-200">
                 <span className="text-amber-500">Đơn vị kiến thức:</span> Đơn vị{' '}
                 {selectedUnitIndex + 1}/{project.units.length} • slide{' '}
@@ -308,7 +308,7 @@ export default function Step2Outline({
                 type="text"
                 value={currentUnit?.title || ''}
                 onChange={(e) => handleUpdateUnit('title', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
 
@@ -318,7 +318,7 @@ export default function Step2Outline({
               <select
                 value={currentUnit?.type || 'theory'}
                 onChange={(e) => handleUpdateUnit('type', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
               >
                 {LECTURE_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -342,7 +342,7 @@ export default function Step2Outline({
                   onChange={(e) =>
                     handleUpdateUnit('startSlide', parseInt(e.target.value) || 1)
                   }
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
               <div className="space-y-1.5">
@@ -357,7 +357,7 @@ export default function Step2Outline({
                   onChange={(e) =>
                     handleUpdateUnit('endSlide', parseInt(e.target.value) || project.slides.length)
                   }
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -371,7 +371,7 @@ export default function Step2Outline({
                 rows={5}
                 value={currentUnit?.mainContent || ''}
                 onChange={(e) => handleUpdateUnit('mainContent', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
               />
             </div>
 
@@ -389,15 +389,15 @@ export default function Step2Outline({
                 onChange={(e) =>
                   handleUpdateUnit('questionCount', Math.max(0, parseInt(e.target.value) || 0))
                 }
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
               />
             </div>
           </div>
 
           {/* Column 3: Slide Preview & Rotation Tool (width 5 cols) */}
-          <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex lg:col-span-5 bg-[#0d1424] border border-slate-800 rounded-xl p-3.5 sm:p-4 flex-col justify-between min-h-[440px]`}>
+          <div className={`${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex lg:col-span-5 bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 flex-col justify-between min-h-[440px] shadow-xs text-slate-900 dark:text-white`}>
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-bold">
                   {previewSlideIndex + 1}
@@ -410,7 +410,7 @@ export default function Step2Outline({
               {/* ROTATE BUTTON */}
               <button
                 onClick={handleRotate}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] rounded-lg bg-slate-900 border border-slate-700 hover:border-cyan-500 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 min-h-[36px] rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-medium transition-colors cursor-pointer"
                 title="Xoay slide 90 độ"
               >
                 <RotateCw className="w-3.5 h-3.5 text-cyan-400" />
@@ -482,7 +482,7 @@ export default function Step2Outline({
       </div>
 
       {/* Bottom Sticky Action Bar */}
-      <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+      <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-medium">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />

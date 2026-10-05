@@ -1,17 +1,31 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
+@variant light (&:where(.light, .light *));
 
 :root {
   color-scheme: light dark;
 }
 
-:root.dark {
+:root.dark, html.dark {
   color-scheme: dark;
 }
 
-:root.light {
+:root.light, html.light {
   color-scheme: light;
+}
+
+/* Base body transitions and background defaults */
+html.light,
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.dark,
+html.dark body {
+  background-color: #090d18;
+  color: #f8fafc;
 }
 
 body {

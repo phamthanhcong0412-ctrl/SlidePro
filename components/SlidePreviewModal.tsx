@@ -144,17 +144,17 @@ export default function SlidePreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-4xl bg-[#101729] border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+      <div className="w-full max-w-4xl bg-white dark:bg-[#101729] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] text-slate-900 dark:text-white">
         {/* Header matching Screenshot 8 */}
-        <div className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-slate-800 flex items-center justify-between bg-[#0b101d] gap-2">
-          <h2 className="text-xs sm:text-base font-bold text-white tracking-tight truncate">
+        <div className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-[#0b101d] gap-2">
+          <h2 className="text-xs sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
             Xem trước – {project.title}
           </h2>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => setRotation((r) => (r + 90) % 360)}
-              className="p-1.5 sm:p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Xoay slide"
             >
               <RotateCw className="w-4 h-4" />
@@ -171,7 +171,7 @@ export default function SlidePreviewModal({
 
             <button
               onClick={handleClose}
-              className="p-1.5 sm:p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 sm:p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -179,7 +179,7 @@ export default function SlidePreviewModal({
         </div>
 
         {/* Slide Display Canvas */}
-        <div className="flex-1 bg-[#0b101b] p-3 sm:p-6 flex items-center justify-center overflow-auto min-h-[240px] sm:min-h-[360px]">
+        <div className="flex-1 bg-slate-100 dark:bg-[#0b101b] p-3 sm:p-6 flex items-center justify-center overflow-auto min-h-[240px] sm:min-h-[360px]">
           <div
             style={{
               transform: `rotate(${rotation}deg)`,
@@ -216,19 +216,19 @@ export default function SlidePreviewModal({
             {/* Slide Footer */}
             <div className="pt-2 sm:pt-3 border-t border-slate-200 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500">
               <span className="font-semibold text-slate-600 truncate max-w-[200px]">{project.title}</span>
-              <span>SlideEdu Education</span>
+              <span>SlidePro Education</span>
             </div>
           </div>
         </div>
 
         {/* Live Narration Script Subtitle bar (shows what voice is saying) */}
-        <div className="bg-[#0e1629] px-4 sm:px-6 py-2 border-t border-slate-800/80 text-xs text-slate-300 italic line-clamp-2">
+        <div className="bg-slate-50 dark:bg-[#0e1629] px-4 sm:px-6 py-2 border-t border-slate-200 dark:border-slate-800/80 text-xs text-slate-700 dark:text-slate-300 italic line-clamp-2">
           <strong className="text-amber-400 not-italic mr-1.5">Lời giảng:</strong>
           &ldquo;{activeSlide.script}&rdquo;
         </div>
 
         {/* Bottom Audio Player Bar matching Screenshot 8 */}
-        <div className="p-3 sm:p-4 bg-[#0a0f1d] border-t border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none">
+        <div className="p-3 sm:p-4 bg-white dark:bg-[#0a0f1d] border-t border-slate-200 dark:border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none text-slate-800 dark:text-slate-200">
           {/* Audio Play & Timeline */}
           <div className="flex items-center gap-2.5 sm:gap-3 flex-1 w-full sm:max-w-md">
             <button
@@ -251,7 +251,7 @@ export default function SlidePreviewModal({
                 const newProgress = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
                 setProgress(newProgress);
               }}
-              className="flex-1 h-2 bg-slate-800 hover:h-2.5 rounded-full overflow-hidden cursor-pointer transition-all"
+              className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 hover:h-2.5 rounded-full overflow-hidden cursor-pointer transition-all"
             >
               <div
                 style={{ width: `${progress}%` }}

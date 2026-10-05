@@ -234,10 +234,10 @@ export default function Step1Upload({
     <div className="flex-1 flex flex-col justify-between p-3.5 sm:p-6 max-w-5xl mx-auto w-full relative">
       {/* Top Title Section matching screenshot 1 */}
       <div className="text-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-6 space-y-2">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Tải lên bài giảng PDF
         </h1>
-        <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto px-2">
+        <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm max-w-xl mx-auto px-2">
           Chọn file PDF bài giảng để bắt đầu soạn nội dung, tạo kịch bản thuyết trình và xuất định dạng PowerPoint (.pptx).
         </p>
       </div>
@@ -254,7 +254,7 @@ export default function Step1Upload({
               ? 'border-cyan-400 bg-cyan-500/10 scale-[1.01]'
               : selectedFileMeta
               ? 'border-blue-500/80 bg-blue-950/20'
-              : 'border-slate-700/80 bg-[#101729]/70 hover:border-slate-500 hover:bg-[#121b30]'
+              : 'border-slate-300 dark:border-slate-700/80 bg-white dark:bg-[#101729]/70 hover:border-cyan-500 hover:bg-slate-50 dark:hover:border-slate-500 dark:hover:bg-[#121b30] shadow-sm'
           }`}
         >
           <input
@@ -295,20 +295,20 @@ export default function Step1Upload({
 
           {/* Badges */}
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-5 sm:mt-6">
-            <span className="px-2.5 py-1 rounded-md bg-slate-800/90 text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-700/60">
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
               Định dạng PDF
             </span>
-            <span className="px-2.5 py-1 rounded-md bg-slate-800/90 text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-700/60">
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
               Tối đa 100 MB
             </span>
-            <span className="px-2.5 py-1 rounded-md bg-slate-800/90 text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-700/60">
+            <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-[11px] sm:text-xs font-medium border border-slate-200 dark:border-slate-700/60">
               1 slide = 1 trang
             </span>
           </div>
         </div>
 
         {/* Grade / Audience Selector Card */}
-        <div className="bg-[#0d1527] border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-md">
+        <div className="bg-white dark:bg-[#0d1527] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
@@ -319,7 +319,7 @@ export default function Step1Upload({
               </span>
             </div>
             <span className="text-[11px] text-cyan-400 font-medium">
-              Đang chọn: <strong className="text-white">{selectedAudience.split('(')[0].trim()}</strong>
+              Đang chọn: <strong className="text-slate-900 dark:text-white">{selectedAudience.split('(')[0].trim()}</strong>
             </span>
           </div>
 
@@ -346,19 +346,19 @@ export default function Step1Upload({
                   className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between min-h-[64px] ${
                     isSelected
                       ? `bg-gradient-to-r ${item.badgeBg} ring-2 ring-cyan-400 shadow-sm shadow-cyan-500/20 scale-[1.01]`
-                      : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                      : 'bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                         {item.short}
                       </span>
-                      <span className="text-[10px] text-slate-400">({item.age})</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">({item.age})</span>
                     </div>
                     {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />}
                   </div>
-                  <span className="text-[10.5px] text-slate-400 mt-1 line-clamp-1">
+                  <span className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
                     {item.desc}
                   </span>
                 </button>
@@ -368,22 +368,22 @@ export default function Step1Upload({
         </div>
 
         {/* Quick Samples */}
-        <div className="bg-[#0f172a]/60 border border-slate-800/80 rounded-xl p-3.5 sm:p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">
+        <div className="bg-white dark:bg-[#0f172a]/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             <span>Hoặc thử nhanh với file mẫu bài giảng:</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
               onClick={() => handleSelectSample(SAMPLE_PROJECTS[0])}
-              className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 active:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 text-left transition-colors group min-h-[48px]"
+              className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 text-left transition-colors group min-h-[48px] shadow-2xs"
             >
               <FileText className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-200 group-hover:text-cyan-300 truncate">
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 truncate">
                   {SAMPLE_PROJECTS[0].title}
                 </div>
-                <div className="text-[11px] text-slate-400">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {SAMPLE_PROJECTS[0].totalPages} slide • Y khoa & Sức khoẻ
                 </div>
               </div>
@@ -391,14 +391,14 @@ export default function Step1Upload({
 
             <button
               onClick={() => handleSelectSample(SAMPLE_PROJECTS[1])}
-              className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 active:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 text-left transition-colors group min-h-[48px]"
+              className="flex items-start gap-2.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/90 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 text-left transition-colors group min-h-[48px] shadow-2xs"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 truncate">
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 truncate">
                   {SAMPLE_PROJECTS[1].title}
                 </div>
-                <div className="text-[11px] text-slate-400">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
                   {SAMPLE_PROJECTS[1].totalPages} slide • Công nghệ & AI
                 </div>
               </div>
@@ -407,10 +407,10 @@ export default function Step1Upload({
         </div>
 
         {/* Expandable Accordion Help */}
-        <div className="border border-slate-800/80 rounded-xl overflow-hidden bg-[#101729]/50">
+        <div className="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-white dark:bg-[#101729]/50 shadow-2xs">
           <button
             onClick={() => setShowHowToConvert(!showHowToConvert)}
-            className="w-full px-3.5 sm:px-4 py-3 min-h-[44px] flex items-center justify-between text-xs text-slate-300 hover:text-white transition-colors"
+            className="w-full px-3.5 sm:px-4 py-3 min-h-[44px] flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-2 text-left pr-2">
               <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
@@ -420,7 +420,7 @@ export default function Step1Upload({
           </button>
 
           {showHowToConvert && (
-            <div className="px-3.5 sm:px-4 pb-4 pt-1 text-xs text-slate-400 space-y-2 border-t border-slate-800/60 bg-[#0d1322] leading-relaxed">
+            <div className="px-3.5 sm:px-4 pb-4 pt-1 text-xs text-slate-600 dark:text-slate-400 space-y-2 border-t border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-[#0d1322] leading-relaxed">
               <p>
                 <strong>• Microsoft PowerPoint:</strong> Vào menu <em>File &gt; Export (hoặc Save As) &gt; Chọn định dạng PDF (*.pdf)</em>.
               </p>
@@ -436,8 +436,8 @@ export default function Step1Upload({
       </div>
 
       {/* Bottom Sticky Action Bar matching screenshot 1 */}
-      <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="text-xs text-slate-400 truncate">
+      <div className="mt-6 sm:mt-8 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
           {selectedFileMeta ? (
             <span className="text-emerald-400 font-medium flex items-center gap-1.5 truncate">
               <FileCheck className="w-3.5 h-3.5 shrink-0" />
@@ -454,7 +454,7 @@ export default function Step1Upload({
           className={`min-h-[44px] px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
             currentProject && !isLoading && !isProcessing
               ? 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white shadow-lg shadow-blue-500/25 cursor-pointer hover:scale-[1.02]'
-              : 'bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-800'
+              : 'bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-800'
           }`}
         >
           {isProcessing ? (
@@ -474,13 +474,13 @@ export default function Step1Upload({
       {/* Processing Overlay Modal */}
       {isProcessing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-[#111827] border border-cyan-500/30 rounded-2xl shadow-2xl p-6 text-center space-y-5">
+          <div className="w-full max-w-md bg-white dark:bg-[#111827] border border-slate-200 dark:border-cyan-500/30 rounded-2xl shadow-2xl p-6 text-center space-y-5 text-slate-900 dark:text-white">
             <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/10">
               <Cpu className="w-8 h-8 animate-pulse text-cyan-400" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white mb-1">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                 Đang xử lý tệp bài giảng PDF
               </h3>
               <p className="text-xs text-cyan-300 font-medium h-6 flex items-center justify-center">
@@ -490,7 +490,7 @@ export default function Step1Upload({
 
             {/* Animated Progress Bar */}
             <div className="space-y-1.5">
-              <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+              <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-300 dark:border-slate-700">
                 <div
                   style={{ width: `${processProgress}%` }}
                   className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 rounded-full transition-all duration-300 ease-out"
@@ -502,7 +502,7 @@ export default function Step1Upload({
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1.5">
               <Sparkles className="w-3 h-3 text-cyan-400" />
               <span>Tự động nhận diện cấu trúc, slide & tạo dàn ý bài giảng</span>
             </div>
