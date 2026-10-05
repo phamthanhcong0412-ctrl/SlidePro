@@ -275,7 +275,7 @@ export default function Step1Upload({
             )}
           </div>
 
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-1 px-2 break-all line-clamp-2">
+          <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-1 px-2 break-all line-clamp-2">
             {selectedFileMeta
               ? selectedFileMeta.name
               : 'Kéo và thả file PDF vào đây'}
@@ -314,7 +314,7 @@ export default function Step1Upload({
               <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
                 <GraduationCap className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Chọn cấp học để AI tối ưu nội dung & văn phong:
               </span>
             </div>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { LectureProject } from '@/types/presentation';
 import { exportToPowerPoint } from '@/lib/exportPptx';
+import { playLectureAudio, stopAnyPlayingAudio } from '@/lib/ttsService';
 
 interface SlidePreviewModalProps {
   isOpen: boolean;
@@ -40,16 +41,12 @@ export default function SlidePreviewModal({
   // Audio Speech Synthesis cleanup
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopAnyPlayingAudio();
     };
   }, []);
 
   const handleClose = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopAnyPlayingAudio();
     setIsPlaying(false);
     setProgress(0);
     onClose();
@@ -110,9 +107,7 @@ export default function SlidePreviewModal({
   };
 
   const handleNext = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopAnyPlayingAudio();
     setIsPlaying(false);
     setProgress(0);
     if (currentSlideIndex < totalSlides - 1) {
@@ -121,9 +116,7 @@ export default function SlidePreviewModal({
   };
 
   const handlePrev = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopAnyPlayingAudio();
     setIsPlaying(false);
     setProgress(0);
     if (currentSlideIndex > 0) {

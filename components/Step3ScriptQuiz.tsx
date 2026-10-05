@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { LectureProject, Slide, QuizQuestion } from '@/types/presentation';
 import { VOICE_OPTIONS, LEARNER_AUDIENCES } from '@/lib/sampleData';
+import { playLectureAudio, stopAnyPlayingAudio, isAudioPlaying, getVoiceProfile, VOICE_PROFILES } from '@/lib/ttsService';
 import { exportToPowerPoint } from '@/lib/exportPptx';
 
 interface Step3ScriptQuizProps {
@@ -64,41 +65,26 @@ export default function Step3ScriptQuiz({
   // Stop speech when component unmounts
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopAnyPlayingAudio();
     };
   }, []);
 
   const handleSpeech = (text: string, slideId: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      alert('Trình duyệt không hỗ trợ phát âm thanh trực tiếp.');
-      return;
-    }
-
     if (isPlayingAudio === slideId) {
-      window.speechSynthesis.cancel();
+      stopAnyPlayingAudio();
       setIsPlayingAudio(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'vi-VN';
-    utterance.rate = 0.95; // Clear pedagogical lecture cadence
-
-    // Match selected voice if system has Vietnamese voice
-    const voices = window.speechSynthesis.getVoices();
-    const viVoice = voices.find((v) => v.lang.includes('vi') || v.lang.includes('VN'));
-    if (viVoice) {
-      utterance.voice = viVoice;
-    }
-
-    utterance.onend = () => setIsPlayingAudio(null);
-    utterance.onerror = () => setIsPlayingAudio(null);
-
     setIsPlayingAudio(slideId);
-    window.speechSynthesis.speak(utterance);
+    playLectureAudio({
+      text,
+      voiceNameOrId: selectedVoice,
+      playbackId: slideId,
+      onStart: () => setIsPlayingAudio(slideId),
+      onEnd: () => setIsPlayingAudio(null),
+      onError: () => setIsPlayingAudio(null),
+    });
   };
 
   const handleOpenEditModal = (slide: Slide) => {
@@ -345,7 +331,7 @@ export default function Step3ScriptQuiz({
         </div>
 
         {/* Warning / Notice Banner */}
-        <div className="bg-[#241712] border border-amber-900/60 rounded-xl p-3 sm:p-3.5 flex items-center gap-2.5 sm:gap-3 text-xs text-amber-200">
+        <div className="bg-amber-50 dark:bg-[#241712] border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 sm:p-3.5 flex items-center gap-2.5 sm:gap-3 text-xs text-amber-900 dark:text-amber-200 shadow-xs">
           <div className="w-6 h-6 rounded-lg bg-amber-600/30 flex items-center justify-center text-amber-400 shrink-0">
             <Sparkles className="w-3.5 h-3.5" />
           </div>
@@ -356,7 +342,7 @@ export default function Step3ScriptQuiz({
         </div>
 
         {/* Sub-bar with Unit info, Voice Selection & Actions matching Screenshot 4 */}
-        <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+        <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs shadow-xs text-slate-800 dark:text-slate-200">
           {/* Active Unit Indicator */}
           <div className="flex items-center gap-2">
             <span className="text-cyan-400 font-bold">
@@ -366,14 +352,16 @@ export default function Step3ScriptQuiz({
 
           {/* Voice Selector */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-400">Giọng giảng bài:</span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium">Giọng giảng bài:</span>
             <select
               value={selectedVoice}
               onChange={(e) => {
+                stopAnyPlayingAudio();
+                setIsPlayingAudio(null);
                 setSelectedVoice(e.target.value);
                 onUpdateProject({ ...project, voice: e.target.value });
               }}
-              className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none min-h-[38px]"
+              className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-lg px-2.5 py-1.5 focus:border-cyan-500 focus:outline-none min-h-[38px] text-xs font-semibold shadow-xs cursor-pointer"
             >
               {VOICE_OPTIONS.map((v) => (
                 <option key={v.id} value={v.name}>
@@ -381,18 +369,21 @@ export default function Step3ScriptQuiz({
                 </option>
               ))}
             </select>
-
             <button
-              onClick={() =>
-                handleSpeech(
-                  'Xin chào các bạn, tôi là trợ lý ảo hỗ trợ thuyết trình bài giảng SlideEdu.',
-                  'sample-voice'
-                )
-              }
-              className="flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 transition-colors"
+              type="button"
+              onClick={() => {
+                const profile = getVoiceProfile(selectedVoice);
+                handleSpeech(profile.sampleText, 'sample-voice');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] rounded-lg transition-colors cursor-pointer text-xs font-semibold shadow-xs ${
+                isPlayingAudio === 'sample-voice'
+                  ? 'bg-cyan-600 text-white animate-pulse'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700'
+              }`}
+              title="Nghe thử giọng đọc được chọn"
             >
-              <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Nghe thử</span>
+              <Volume2 className={`w-3.5 h-3.5 ${isPlayingAudio === 'sample-voice' ? 'text-white' : 'text-cyan-600 dark:text-cyan-400'}`} />
+              <span>{isPlayingAudio === 'sample-voice' ? 'Đang đọc thử...' : 'Nghe thử'}</span>
             </button>
           </div>
 
@@ -532,7 +523,7 @@ export default function Step3ScriptQuiz({
               return (
                 <div
                   key={slide.id}
-                  className="bg-[#0d1424] border border-slate-800 rounded-2xl p-4 grid grid-cols-1 md:grid-cols-12 gap-5 items-start hover:border-slate-700 transition-colors"
+                  className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 grid shadow-sm grid-cols-1 md:grid-cols-12 gap-5 items-start hover:border-slate-700 transition-colors"
                 >
                   {/* Left Column: Thumbnail & Duration */}
                   <div className="md:col-span-4 space-y-2">
@@ -626,7 +617,7 @@ export default function Step3ScriptQuiz({
                     </div>
 
                     {/* Script Content Card */}
-                    <div className="bg-[#12192c] border border-slate-800 rounded-xl p-3.5 text-xs text-slate-200 leading-relaxed min-h-[120px]">
+                    <div className="bg-slate-50 dark:bg-[#12192c] border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-800 dark:text-slate-200 leading-relaxed min-h-[120px]">
                       {slide.script}
                     </div>
                   </div>
@@ -702,7 +693,7 @@ export default function Step3ScriptQuiz({
                 {project.quizzes.map((q, qIdx) => (
                   <div
                     key={q.id || qIdx}
-                    className="bg-[#0d1424] border border-slate-800 rounded-2xl p-4 space-y-3"
+                    className="bg-white dark:bg-[#0d1424] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2.5 flex-1">
@@ -797,7 +788,7 @@ export default function Step3ScriptQuiz({
       {/* Script Edit Modal */}
       {editingSlideId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#131b2e] border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4">
+          <div className="w-full max-w-lg bg-white dark:bg-[#131b2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
               <div>
                 <h3 className="text-sm font-bold text-white">Chỉnh sửa lời giảng</h3>
@@ -882,7 +873,7 @@ export default function Step3ScriptQuiz({
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-[#0d162a] border border-cyan-500/40 text-cyan-200 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 bg-white dark:bg-[#0d162a] border border-cyan-500/40 text-slate-900 dark:text-cyan-200 shadow-2xl px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium animate-in fade-in slide-in-from-bottom-2 duration-200">
           <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>

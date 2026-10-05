@@ -244,8 +244,8 @@ export const LECTURE_TYPES = [
 ];
 
 export const VOICE_OPTIONS = [
-  { id: 'female-young', name: 'Nữ trẻ (Hà Nội)', lang: 'vi-VN', gender: 'female' },
-  { id: 'female-south', name: 'Nữ nhẹ nhàng (Miền Nam)', lang: 'vi-VN', gender: 'female' },
-  { id: 'male-inspiring', name: 'Nam truyền cảm (Hà Nội)', lang: 'vi-VN', gender: 'male' },
-  { id: 'male-pro', name: 'Nam đĩnh đạc (Miền Nam)', lang: 'vi-VN', gender: 'male' }
+  { id: 'female-young', name: 'Nữ - Giọng Bắc (Hà Nội)', lang: 'vi-VN', gender: 'female', region: 'Bắc', shortLabel: 'Nữ Bắc' },
+  { id: 'male-inspiring', name: 'Nam - Giọng Bắc (Hà Nội)', lang: 'vi-VN', gender: 'male', region: 'Bắc', shortLabel: 'Nam Bắc' },
+  { id: 'female-south', name: 'Nữ - Giọng Nam (Nam Bộ)', lang: 'vi-VN', gender: 'female', region: 'Nam', shortLabel: 'Nữ Nam' },
+  { id: 'male-pro', name: 'Nam - Giọng Nam (Nam Bộ)', lang: 'vi-VN', gender: 'male', region: 'Nam', shortLabel: 'Nam Nam' },
 ];
